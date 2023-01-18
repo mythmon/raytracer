@@ -16,6 +16,10 @@ impl Vec3 {
         Self(e1, e2, e3)
     }
 
+    pub fn white() -> Self {
+        Self(1.0, 1.0, 1.0)
+    }
+
     pub fn rand_unit_vector() -> Self {
         let between = Uniform::new_inclusive(-1.0, 1.0);
         let mut rng = rand::thread_rng();
@@ -51,6 +55,13 @@ impl Vec3 {
     /// Reflect this vector across a normal vector
     pub fn reflect(self, normal: Vec3) -> Vec3 {
         self - 2.0 * self.dot(normal) * normal
+    }
+
+    pub fn refract(self, normal: Vec3, eta_i_over_eta_t: f64) -> Vec3 {
+        let cos_theta = (-self).dot(normal).min(1.0);
+        let r_out_perp = eta_i_over_eta_t * (self + cos_theta * normal);
+        let r_out_parallel = (1.0 - r_out_perp.length_squared()).abs().sqrt() * -normal;
+        r_out_perp + r_out_parallel
     }
 
     pub fn unit_vector(self) -> Vec3 {

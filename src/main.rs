@@ -10,7 +10,7 @@ use crate::{
     camera::Camera,
     geom::{Color, Point3, Ray},
     hittable::{hittable_list::HittableList, sphere::Sphere},
-    material::{Lambertian, Metal},
+    material::{Lambertian, Metal, Dielectric},
 };
 use anyhow::Result;
 use hittable::Hittable;
@@ -21,7 +21,7 @@ use rand::Rng;
 fn main() -> Result<()> {
     // Image
     let aspect_ratio = 16.0 / 9.0;
-    let image_width = 800;
+    let image_width = 960;
     let image_height = (image_width as f64 / aspect_ratio) as u64;
     let samples_per_pixel = 100;
     let max_depth = 50;
@@ -32,16 +32,11 @@ fn main() -> Result<()> {
     let material_ground = Rc::new(Lambertian {
         albedo: Color::new(0.8, 0.8, 0.0),
     });
-    let material_center = Rc::new(Lambertian {
-        albedo: Color::new(0.7, 0.3, 0.3),
-    });
-    let material_left = Rc::new(Metal {
-        albedo: Color::new(0.8, 0.8, 0.8),
-        fuzziness: 0.1,
-    });
+    let material_center = Rc::new(Lambertian { albedo: Color::new(0.1, 0.2, 0.5) });
+    let material_left = Rc::new(Dielectric { index_of_refraction: 1.5 });
     let material_right = Rc::new(Metal {
         albedo: Color::new(0.8, 0.6, 0.2),
-        fuzziness: 0.5,
+        fuzziness: 0.0,
     });
 
     world.add(Rc::new(Sphere {
@@ -57,6 +52,11 @@ fn main() -> Result<()> {
     world.add(Rc::new(Sphere {
         center: Point3::new(-1.0, 0.0, -1.0),
         radius: 0.5,
+        material: material_left.clone(),
+    }));
+    world.add(Rc::new(Sphere {
+        center: Point3::new(-1.0, 0.0, -1.0),
+        radius: -0.4,
         material: material_left,
     }));
     world.add(Rc::new(Sphere {
