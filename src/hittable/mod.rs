@@ -1,5 +1,8 @@
-pub mod hittable_list;
-pub mod sphere;
+mod hittable_list;
+mod sphere;
+
+pub use hittable_list::HittableList;
+pub use sphere::Sphere;
 
 use crate::{geom::{Point3, Vec3, Ray}, material::Material};
 use std::{ops::Range, rc::Rc};
