@@ -5,6 +5,10 @@ pub struct Camera {
     lower_left_corner: Point3,
     horizontal: Vec3,
     vertical: Vec3,
+    lens_radius: f64,
+    u: Vec3,
+    v: Vec3,
+    // w: Vec3,
 }
 
 impl Camera {
@@ -14,6 +18,8 @@ impl Camera {
         v_up: Vec3,
         vertical_fov: f64,
         aspect_ratio: f64,
+        aperture: f64,
+        focus_dist: f64,
     ) -> Self {
         let theta = vertical_fov.to_radians();
         let h = (theta / 2.0).tan();
@@ -25,22 +31,26 @@ impl Camera {
         let v = w.cross(u);
 
         let origin = look_from;
-        let horizontal = viewport_width * u;
-        let vertical = viewport_height * v;
-        let lower_left_corner = origin - horizontal / 2.0 - vertical / 2.0 - w;
+        let horizontal = focus_dist * viewport_width * u;
+        let vertical = focus_dist * viewport_height * v;
 
         Self {
             origin,
-            lower_left_corner,
             horizontal,
             vertical,
+            lower_left_corner: origin - horizontal / 2.0 - vertical / 2.0 - focus_dist * w,
+            lens_radius: aperture / 2.0,
+            u,
+            v,
         }
     }
 
     pub fn get_ray(&self, s: f64, t: f64) -> Ray {
+        let rd = self.lens_radius * Vec3::rand_in_unit_disk();
+        let offset = self.u * rd.x() + self.v * rd.y();
         Ray::new(
-            self.origin,
-            self.lower_left_corner + s * self.horizontal + t * self.vertical - self.origin,
+            self.origin + offset,
+            self.lower_left_corner + s * self.horizontal + t * self.vertical - self.origin - offset,
         )
     }
 }

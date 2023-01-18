@@ -19,7 +19,7 @@ use rand::Rng;
 fn main() -> Result<()> {
     // Image
     let aspect_ratio = 16.0 / 9.0;
-    let image_width = 960;
+    let image_width = 800;
     let image_height = (image_width as f64 / aspect_ratio) as u64;
     let samples_per_pixel = 100;
     let max_depth = 50;
@@ -68,12 +68,16 @@ fn main() -> Result<()> {
     }));
 
     // Camera
+    let look_from = Point3::new(3.0, 3.0, 2.0);
+    let look_at = Point3::new(0.0, 0.0, -1.0);
     let camera = Camera::new(
-        Point3::new(-2.0, 2.0, 1.0),
-        Point3::new(0.0, 0.0, -1.0),
+        look_from,
+        look_at,
         Vec3::new(0.0, 1.0, 0.0),
         20.0,
         aspect_ratio,
+        0.5,
+        (look_at - look_from).length(),
     );
 
     // Render

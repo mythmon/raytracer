@@ -32,6 +32,17 @@ impl Vec3 {
         }
     }
 
+    pub fn rand_in_unit_disk() -> Self {
+        let between = Uniform::new_inclusive(-1.0, 1.0);
+        let mut rng = rand::thread_rng();
+        loop {
+            let x = between.sample(&mut rng);
+            let y = between.sample(&mut rng);
+            let v = Vec3(x, y, 0.0);
+            if v.length_squared() < 1.0 { break v }
+        }
+    }
+
     pub fn length(self) -> f64 {
         self.length_squared().sqrt()
     }
