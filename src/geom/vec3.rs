@@ -3,6 +3,7 @@ use std::{
     ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign},
 };
 
+use pix::rgb::SRgb8;
 use rand::{distributions::Uniform, prelude::Distribution};
 
 #[derive(Copy, Clone, Default)]
@@ -104,17 +105,16 @@ impl Vec3 {
         self.0.abs() < LIMIT && self.1.abs() < LIMIT && self.2.abs() < LIMIT
     }
 
-    pub fn into_ppm_color(&self, samples_per_pixel: usize) -> String {
+    pub fn into_srgb8(&self, samples_per_pixel: usize) -> SRgb8 {
         let scale = (samples_per_pixel as f64).recip();
         let max = 255.0 / 256.0;
-        // sqrt applies a gamma-correction of gamma=2.0
-        let r = (self.r() * scale).sqrt().clamp(0.0, max);
-        let g = (self.g() * scale).sqrt().clamp(0.0, max);
-        let b = (self.b() * scale).sqrt().clamp(0.0, max);
+        let r = (self.r() * scale).clamp(0.0, max);
+        let g = (self.g() * scale).clamp(0.0, max);
+        let b = (self.b() * scale).clamp(0.0, max);
         let ir = (r * 256.0) as u8;
         let ig = (g * 256.0) as u8;
         let ib = (b * 256.0) as u8;
-        format!("{} {} {}", ir, ig, ib)
+        SRgb8::new(ir, ig, ib)
     }
 }
 
