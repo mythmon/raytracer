@@ -1,6 +1,10 @@
 use std::rc::Rc;
 
-use crate::{hittable::{HittableList, self}, material, geom::{Color, Point3}};
+use crate::{
+    geom::{Color, Point3},
+    hittable::{self, HittableList},
+    material,
+};
 
 #[allow(dead_code)]
 pub fn scene() -> HittableList {

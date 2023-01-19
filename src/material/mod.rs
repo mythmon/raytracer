@@ -1,18 +1,21 @@
+mod dielectric;
 mod lambertian;
 mod metal;
-mod dielectric;
 
-pub use metal::Metal;
-pub use lambertian::Lambertian;
 pub use dielectric::Dielectric;
+pub use lambertian::Lambertian;
+pub use metal::Metal;
 
-use crate::{geom::{Ray, Color}, hittable::HitRecord};
+use crate::{
+    geom::{Color, Ray},
+    hittable::HitRecord,
+};
 
 pub trait Material {
-  fn scatter(&self, ray_in: &Ray, hit_record: &HitRecord) -> ScatterResult;
+    fn scatter(&self, ray_in: &Ray, hit_record: &HitRecord) -> ScatterResult;
 }
 
 pub struct ScatterResult {
-  pub attenuation: Color,
-  pub scattered_ray: Option<Ray>
+    pub attenuation: Color,
+    pub scattered_ray: Option<Ray>,
 }

@@ -1,7 +1,11 @@
-use crate::{material::{Material, ScatterResult}, geom::{Color, Ray, Vec3}, hittable::HitRecord};
+use crate::{
+    geom::{Color, Ray, Vec3},
+    hittable::HitRecord,
+    material::{Material, ScatterResult},
+};
 
 pub struct Lambertian {
-  pub albedo: Color,
+    pub albedo: Color,
 }
 
 impl Material for Lambertian {

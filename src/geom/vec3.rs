@@ -29,7 +29,9 @@ impl Vec3 {
             let y = between.sample(&mut rng);
             let z = between.sample(&mut rng);
             let v = Vec3(x, y, z);
-            if v.length_squared() < 1.0 { break v.unit_vector() }
+            if v.length_squared() < 1.0 {
+                break v.unit_vector();
+            }
         }
     }
 
@@ -40,7 +42,9 @@ impl Vec3 {
             let x = between.sample(&mut rng);
             let y = between.sample(&mut rng);
             let v = Vec3(x, y, 0.0);
-            if v.length_squared() < 1.0 { break v }
+            if v.length_squared() < 1.0 {
+                break v;
+            }
         }
     }
 

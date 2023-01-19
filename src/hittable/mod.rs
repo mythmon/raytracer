@@ -4,7 +4,10 @@ mod sphere;
 pub use hittable_list::HittableList;
 pub use sphere::Sphere;
 
-use crate::{geom::{Point3, Vec3, Ray}, material::Material};
+use crate::{
+    geom::{Point3, Ray, Vec3},
+    material::Material,
+};
 use std::{ops::Range, rc::Rc};
 
 pub trait Hittable {
@@ -20,13 +23,25 @@ pub struct HitRecord {
 }
 
 impl HitRecord {
-    pub fn new(p: Point3, t: f64, ray: &Ray, outward_normal: Vec3, material: Rc<dyn Material>) -> Self {
+    pub fn new(
+        p: Point3,
+        t: f64,
+        ray: &Ray,
+        outward_normal: Vec3,
+        material: Rc<dyn Material>,
+    ) -> Self {
         let front_face = ray.direction.dot(outward_normal) < 0.0;
         let normal = if front_face {
             outward_normal
         } else {
             -outward_normal
         };
-        Self { p, normal, material, t, front_face }
+        Self {
+            p,
+            normal,
+            material,
+            t,
+            front_face,
+        }
     }
 }

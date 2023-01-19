@@ -1,6 +1,6 @@
-use std::rc::Rc;
-use ordered_float::OrderedFloat;
 use crate::hittable::Hittable;
+use ordered_float::OrderedFloat;
+use std::rc::Rc;
 
 #[derive(Default)]
 pub struct HittableList {
