@@ -8,10 +8,6 @@ pub struct HittableList {
 }
 
 impl HittableList {
-    pub fn clear(&mut self) {
-        self.objects.clear();
-    }
-
     pub fn add<T: Hittable + 'static>(&mut self, object: Rc<T>) {
         self.objects.push(object);
     }

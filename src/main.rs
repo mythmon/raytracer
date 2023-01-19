@@ -1,10 +1,9 @@
-pub mod camera;
-pub mod geom;
-pub mod hittable;
-pub mod interpolate;
-pub mod material;
-
-use std::rc::Rc;
+mod camera;
+mod geom;
+mod hittable;
+mod interpolate;
+mod material;
+mod scenes;
 
 use crate::{
     camera::Camera,
@@ -18,66 +17,26 @@ use rand::Rng;
 
 fn main() -> Result<()> {
     // Image
-    let aspect_ratio = 16.0 / 9.0;
-    let image_width = 800;
+    let aspect_ratio = 3.0 / 2.0;
+    let image_width = 1200;
     let image_height = (image_width as f64 / aspect_ratio) as u64;
-    let samples_per_pixel = 100;
+    let samples_per_pixel = 500;
     let max_depth = 50;
 
     // World
-    let mut world = hittable::HittableList::default();
-
-    let material_ground = Rc::new(material::Lambertian {
-        albedo: Color::new(0.8, 0.8, 0.0),
-    });
-    let material_center = Rc::new(material::Lambertian {
-        albedo: Color::new(0.1, 0.2, 0.5),
-    });
-    let material_left = Rc::new(material::Dielectric {
-        index_of_refraction: 1.5,
-    });
-    let material_right = Rc::new(material::Metal {
-        albedo: Color::new(0.8, 0.6, 0.2),
-        fuzziness: 0.0,
-    });
-
-    world.add(Rc::new(hittable::Sphere {
-        center: Point3::new(0.0, -100.5, -1.0),
-        radius: 100.0,
-        material: material_ground,
-    }));
-    world.add(Rc::new(hittable::Sphere {
-        center: Point3::new(0.0, 0.0, -1.0),
-        radius: 0.5,
-        material: material_center,
-    }));
-    world.add(Rc::new(hittable::Sphere {
-        center: Point3::new(-1.0, 0.0, -1.0),
-        radius: 0.5,
-        material: material_left.clone(),
-    }));
-    world.add(Rc::new(hittable::Sphere {
-        center: Point3::new(-1.0, 0.0, -1.0),
-        radius: -0.4,
-        material: material_left,
-    }));
-    world.add(Rc::new(hittable::Sphere {
-        center: Point3::new(1.0, 0.0, -1.0),
-        radius: 0.5,
-        material: material_right,
-    }));
+    let world = scenes::random_balls();
 
     // Camera
-    let look_from = Point3::new(3.0, 3.0, 2.0);
-    let look_at = Point3::new(0.0, 0.0, -1.0);
+    let look_from = Point3::new(13.0, 2.0, 3.0);
+    let look_at = Point3::new(0.0, 0.0, 0.0);
     let camera = Camera::new(
         look_from,
         look_at,
         Vec3::new(0.0, 1.0, 0.0),
         20.0,
         aspect_ratio,
-        0.5,
-        (look_at - look_from).length(),
+        0.1,
+        10.0
     );
 
     // Render

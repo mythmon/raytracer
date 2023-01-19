@@ -208,3 +208,9 @@ impl Sum for Vec3 {
         iter.reduce(|a, b| a + b).unwrap_or_default()
     }
 }
+
+impl Distribution<Vec3> for rand::distributions::Standard {
+    fn sample<R: rand::Rng + ?Sized>(&self, rng: &mut R) -> Vec3 {
+        Vec3(rng.gen(), rng.gen(), rng.gen())
+    }
+}
