@@ -3,12 +3,13 @@ use crate::{
     hittable::{HitRecord, Hittable},
     material::Material,
 };
-use std::{ops::Range, rc::Rc};
+use std::{ops::Range, sync::Arc};
 
+#[derive(Clone)]
 pub struct Sphere {
     pub center: Point3,
     pub radius: f64,
-    pub material: Rc<dyn Material>,
+    pub material: Arc<dyn Material>,
 }
 
 impl Hittable for Sphere {

@@ -1,15 +1,14 @@
 use crate::hittable::Hittable;
 use ordered_float::OrderedFloat;
-use std::rc::Rc;
 
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct HittableList {
-    objects: Vec<Rc<dyn Hittable>>,
+    objects: Vec<Box<dyn Hittable>>,
 }
 
 impl HittableList {
-    pub fn add<T: Hittable + 'static>(&mut self, object: Rc<T>) {
-        self.objects.push(object);
+    pub fn add<T: Hittable + 'static>(&mut self, object: T) {
+        self.objects.push(Box::new(object));
     }
 }
 

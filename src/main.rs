@@ -4,20 +4,20 @@ mod hittable;
 mod interpolate;
 mod material;
 mod scenes;
-
-use std::time::{self, Duration};
-
 use crate::{
     camera::Camera,
     geom::{Color, Point3, Ray, Vec3},
+    hittable::HittableList,
 };
 use anyhow::{Context, Result};
 use hittable::Hittable;
-use indicatif::{ProgressBar, ProgressStyle};
+use indicatif::{ParallelProgressIterator, ProgressBar, ProgressStyle};
 use interpolate::lerp;
 use pix::rgb::SRgb8;
 use png_pong::PngRaster;
 use rand::{distributions, prelude::Distribution};
+use rayon::prelude::ParallelIterator;
+use std::time::{self, Duration};
 
 fn main() -> Result<()> {
     // Image
@@ -44,35 +44,80 @@ fn main() -> Result<()> {
     );
 
     // Render
-    let bar = ProgressBar::new(image_height as u64);
+    let bar = ProgressBar::new(image_height as u64 * image_width as u64);
     bar.set_style(ProgressStyle::with_template(
-        "{bar} [{elapsed}/{duration}] {msg}",
+        "{bar} {human_pos}/{human_len} ({percent}%) {elapsed_precise}",
     )?);
 
-    let jitter = distributions::Standard;
-    let mut rng = rand::thread_rng();
     let start = time::Instant::now();
 
     let mut raster = pix::Raster::<SRgb8>::with_clear(image_width, image_height);
-
-    for (y, row) in raster.rows_mut(()).enumerate() {
-        for (x, pixel) in row.iter_mut().enumerate() {
-            let jitters = jitter.sample_iter(&mut rng);
-            let color: Color = jitters
-                .take(samples_per_pixel)
-                .map(|(jx, jy): (f64, f64)| {
-                    let u = (x as f64 + jx) / (image_width as f64 - 1.0);
-                    let v = ((image_height as usize - y) as f64 + jy) / (image_height as f64 - 1.0);
-                    let ray = camera.get_ray(u, v);
-                    ray_color(ray, &world, max_depth)
-                })
-                .sum();
-            *pixel = color.into_srgb8(samples_per_pixel);
-        }
-        bar.inc(1);
-        bar.set_message(format!("{} scan lines to go", image_height as usize - y))
+    struct LocatedPixel<'a> {
+        x: usize,
+        y: usize,
+        pixel: &'a mut SRgb8,
     }
-    bar.finish_and_clear();
+    struct ParallelWorkItem<'a> {
+        pixels: &'a mut [LocatedPixel<'a>],
+        world: HittableList,
+    }
+
+    let mut pixels = raster
+        .pixels_mut()
+        .iter_mut()
+        .enumerate()
+        .map(|(index, pixel)| LocatedPixel {
+            x: index % image_width as usize,
+            y: index / image_width as usize,
+            pixel,
+        })
+        .collect::<Vec<_>>();
+    let work = ParallelWorkItem {
+        pixels: &mut pixels[..],
+        world,
+    };
+
+    fn split_pixels<'a>(
+        work: ParallelWorkItem<'a>,
+    ) -> (ParallelWorkItem<'a>, Option<ParallelWorkItem<'a>>) {
+        let h = work.pixels.len() / 2;
+        if h > 0 {
+            let (left, right) = work.pixels.split_at_mut(h);
+            (
+                ParallelWorkItem {
+                    pixels: left,
+                    world: work.world.clone(),
+                },
+                Some(ParallelWorkItem {
+                    pixels: right,
+                    world: work.world,
+                }),
+            )
+        } else {
+            (work, None)
+        }
+    }
+
+    rayon::iter::split(work, split_pixels)
+        .progress_with(bar.clone())
+        .for_each(|ParallelWorkItem { world, pixels }| {
+            let mut rng = rand::thread_rng();
+            for LocatedPixel { x, y, pixel } in pixels.into_iter() {
+                let color: Color = distributions::Standard
+                    .sample_iter(&mut rng)
+                    .take(samples_per_pixel)
+                    .map(|(jx, jy): (f64, f64)| {
+                        let u = (*x as f64 + jx) / (image_width as f64 - 1.0);
+                        let v = ((image_height as usize - *y) as f64 + jy)
+                            / (image_height as f64 - 1.0);
+                        let ray = camera.get_ray(u, v);
+                        ray_color(ray, &world, max_depth)
+                    })
+                    .sum();
+                **pixel = color.into_srgb8(samples_per_pixel);
+                bar.inc(1);
+            }
+        });
 
     // Saving raster as a PNG file
     let png_raster = PngRaster::Rgb8(raster);
@@ -95,7 +140,10 @@ fn ray_color<H: Hittable>(ray: Ray, hittable: &H, depth_budget: usize) -> Color 
     if depth_budget == 0 {
         Color::default()
     } else if let Some(hit_record) = hittable.hit(&ray, 0.001..f64::INFINITY) {
-        let scatter_record = hit_record.material.scatter(&ray, &hit_record);
+        let scatter_record = {
+            let material = hit_record.material.clone();
+            material.scatter(&ray, &hit_record)
+        };
         if let Some(scattered) = scatter_record.scattered_ray {
             return scatter_record.attenuation * ray_color(scattered, hittable, depth_budget - 1);
         } else {

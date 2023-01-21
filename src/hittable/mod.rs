@@ -8,16 +8,18 @@ use crate::{
     geom::{Point3, Ray, Vec3},
     material::Material,
 };
-use std::{ops::Range, rc::Rc};
+use dyn_clonable::clonable;
+use std::{ops::Range, sync::Arc};
 
-pub trait Hittable {
+#[clonable]
+pub trait Hittable: Send + Sync + Clone {
     fn hit(&self, ray: &Ray, t_range: Range<f64>) -> Option<HitRecord>;
 }
 
 pub struct HitRecord {
     pub p: Point3,
     pub normal: Vec3,
-    pub material: Rc<dyn Material>,
+    pub material: Arc<dyn Material>,
     pub t: f64,
     pub front_face: bool,
 }
@@ -28,7 +30,7 @@ impl HitRecord {
         t: f64,
         ray: &Ray,
         outward_normal: Vec3,
-        material: Rc<dyn Material>,
+        material: Arc<dyn Material>,
     ) -> Self {
         let front_face = ray.direction.dot(outward_normal) < 0.0;
         let normal = if front_face {

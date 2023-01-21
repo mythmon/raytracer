@@ -4,9 +4,11 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-indicatif = "0.17.1"
+indicatif = {version = "0.17.1", features = ["rayon", "improved_unicode"]}
 anyhow = "1.0.68"
 ordered-float = "3.4.0"
 rand = "0.8.5"
 png_pong = "0.8.2"
 pix = "0.13.2"
+rayon = "1.6.1"
+dyn-clonable = "0.9.0"

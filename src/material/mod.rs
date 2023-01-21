@@ -11,7 +11,7 @@ use crate::{
     hittable::HitRecord,
 };
 
-pub trait Material {
+pub trait Material: Send + Sync {
     fn scatter(&self, ray_in: &Ray, hit_record: &HitRecord) -> ScatterResult;
 }
 
