@@ -2,11 +2,11 @@ use std::{
     iter::Sum,
     ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign},
 };
-
 use pix::rgb::SRgb8;
 use rand::{distributions::Uniform, prelude::Distribution};
+use serde::{Deserialize, Serialize};
 
-#[derive(Copy, Clone, Default)]
+#[derive(Copy, Clone, Default, Deserialize, Serialize, Debug)]
 pub struct Vec3(pub f64, pub f64, pub f64);
 
 pub type Color = Vec3;
@@ -109,7 +109,7 @@ impl Vec3 {
         self.0.abs() < LIMIT && self.1.abs() < LIMIT && self.2.abs() < LIMIT
     }
 
-    pub fn into_srgb8(&self, samples_per_pixel: usize) -> SRgb8 {
+    pub fn into_srgb8(&self, samples_per_pixel: u32) -> SRgb8 {
         let scale = (samples_per_pixel as f64).recip();
         let max = 255.0 / 256.0;
         let r = (self.r() * scale).clamp(0.0, max);

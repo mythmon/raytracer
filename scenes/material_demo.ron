@@ -1,0 +1,47 @@
+Scene(
+    image: (
+        width: 640,
+        height: 360,
+        samples_per_pixel: 100,
+        max_depth: 50 
+    ),
+
+    camera: (
+        look_from: (-7, 1.5, 4),
+        look_at: (0, 0.2, -1),
+        v_up: (0, 1, 0),
+        vertical_fov: 18,
+        aperture: 0.1,
+        focus_distance: 10
+    ),
+
+    materials: {
+        "ground": Lambertian(albedo: (0.8, 0.8, 0.0)),
+        "center": Lambertian(albedo: (0.2, 0.3, 0.8)),
+        "left": Dielectric(index_of_refraction: 1.5),
+        "right": Metal(albedo: (0.8, 0.8, 0.7), fuzziness: 0.1)
+    },
+
+    objects: [
+        Sphere(
+            center: (0, -100.5, -1),
+            radius: 100,
+            material: "ground"
+        ),
+        Sphere(
+            center: (0, 0, -1),
+            radius: 0.5,
+            material: "center"
+        ),
+        Sphere(
+            center: (-1.1, 0, -1),
+            radius: 0.5,
+            material: "left"
+        ),
+        Sphere(
+            center: (1.1, 0, -1),
+            radius: 0.5,
+            material: "right"
+        ),
+    ]
+)

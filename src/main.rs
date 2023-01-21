@@ -1,12 +1,14 @@
 mod camera;
+mod config;
 mod geom;
 mod hittable;
 mod interpolate;
+mod loader;
 mod material;
 mod scenes;
+
 use crate::{
-    camera::Camera,
-    geom::{Color, Point3, Ray, Vec3},
+    geom::{Color, Ray},
     hittable::HittableList,
 };
 use anyhow::{Context, Result};
@@ -17,41 +19,29 @@ use pix::rgb::SRgb8;
 use png_pong::PngRaster;
 use rand::{distributions, prelude::Distribution};
 use rayon::prelude::ParallelIterator;
-use std::time::{self, Duration};
+use std::{
+    path::PathBuf,
+    str::FromStr,
+    time::{self, Duration},
+};
 
 fn main() -> Result<()> {
-    // Image
-    let aspect_ratio = 3.0 / 2.0;
-    let image_width = 1200;
-    let image_height = (image_width as f64 / aspect_ratio) as u32;
-    let samples_per_pixel = 500;
-    let max_depth = 50;
-
-    // World
-    let world = scenes::random_balls();
-
-    // Camera
-    let look_from = Point3::new(13.0, 2.0, 3.0);
-    let look_at = Point3::new(0.0, 0.0, 0.0);
-    let camera = Camera::new(
-        look_from,
-        look_at,
-        Vec3::new(0.0, 1.0, 0.0),
-        20.0,
-        aspect_ratio,
-        0.1,
-        10.0,
-    );
+    // Scene
+    let config::Scene {
+        world,
+        camera,
+        image,
+    } = loader::load_scene(&PathBuf::from_str("./scenes/material_demo.ron")?)?;
 
     // Render
-    let bar = ProgressBar::new(image_height as u64 * image_width as u64);
+    let bar = ProgressBar::new(image.height as u64 * image.width as u64);
     bar.set_style(ProgressStyle::with_template(
         "{bar} {human_pos}/{human_len} ({percent}%) {elapsed_precise}",
     )?);
 
     let start = time::Instant::now();
 
-    let mut raster = pix::Raster::<SRgb8>::with_clear(image_width, image_height);
+    let mut raster = pix::Raster::<SRgb8>::with_clear(image.width, image.height);
     struct LocatedPixel<'a> {
         x: usize,
         y: usize,
@@ -67,8 +57,8 @@ fn main() -> Result<()> {
         .iter_mut()
         .enumerate()
         .map(|(index, pixel)| LocatedPixel {
-            x: index % image_width as usize,
-            y: index / image_width as usize,
+            x: index % image.width as usize,
+            y: index / image.width as usize,
             pixel,
         })
         .collect::<Vec<_>>();
@@ -105,16 +95,16 @@ fn main() -> Result<()> {
             for LocatedPixel { x, y, pixel } in pixels.into_iter() {
                 let color: Color = distributions::Standard
                     .sample_iter(&mut rng)
-                    .take(samples_per_pixel)
+                    .take(image.samples_per_pixel as usize)
                     .map(|(jx, jy): (f64, f64)| {
-                        let u = (*x as f64 + jx) / (image_width as f64 - 1.0);
-                        let v = ((image_height as usize - *y) as f64 + jy)
-                            / (image_height as f64 - 1.0);
+                        let u = (*x as f64 + jx) / (image.width as f64 - 1.0);
+                        let v = ((image.height as usize - *y) as f64 + jy)
+                            / (image.height as f64 - 1.0);
                         let ray = camera.get_ray(u, v);
-                        ray_color(ray, &world, max_depth)
+                        ray_color(ray, &world, image.max_depth)
                     })
                     .sum();
-                **pixel = color.into_srgb8(samples_per_pixel);
+                **pixel = color.into_srgb8(image.samples_per_pixel);
                 bar.inc(1);
             }
         });
@@ -136,7 +126,7 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-fn ray_color<H: Hittable>(ray: Ray, hittable: &H, depth_budget: usize) -> Color {
+fn ray_color<H: Hittable>(ray: Ray, hittable: &H, depth_budget: u32) -> Color {
     if depth_budget == 0 {
         Color::default()
     } else if let Some(hit_record) = hittable.hit(&ray, 0.001..f64::INFINITY) {
