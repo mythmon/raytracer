@@ -26,22 +26,22 @@ Scene(
         Sphere(
             center: (0, -100.5, -1),
             radius: 100,
-            material: "ground"
+            material: Shared("ground"),
         ),
         Sphere(
             center: (0, 0, -1),
             radius: 0.5,
-            material: "center"
+            material: Shared("center"),
         ),
         Sphere(
             center: (-1.1, 0, -1),
             radius: 0.5,
-            material: "left"
+            material: Shared("left"),
         ),
         Sphere(
             center: (1.1, 0, -1),
             radius: 0.5,
-            material: "right"
+            material: Shared("right"),
         ),
     ]
 )

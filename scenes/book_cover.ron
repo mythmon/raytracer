@@ -1,0 +1,81 @@
+Scene(
+    image: (
+        width: 1200,
+        height: 800,
+        samples_per_pixel: 500,
+        max_depth: 50 
+    ),
+
+    camera: (
+        look_from: (13, 2, 3),
+        v_up: (0, 1, 0),
+        vertical_fov: 18,
+        aperture: 0.02,
+        focus_distance: 10
+    ),
+
+    materials: {
+        "ground": Lambertian(albedo: (0.7, 0.7, 0.7)),
+        "glass": Dielectric(index_of_refraction: 1.5),
+        "big_diffuse": Lambertian(albedo: (0.4, 0.2, 0.1)),
+        "big_metal": Metal(albedo: (0.7, 0.6, 0.5), fuzziness: 0.03),
+    },
+
+    objects: [
+        Sphere (
+            center: (0, -1000, 0),
+            radius: 1000,
+            material: Shared("ground"),
+        ),
+
+        // This doesn't support avoiding the big spheres with the little ones
+        Pattern (
+            var: "a",
+            range: [-11, 11],
+            object: Pattern(
+                var: "b",
+                range: [-11, 11],
+                object: Sphere (
+                    center: (
+                        ("add", "a", ("rand", -0.4, 0.4)),
+                        0.2,
+                        ("add", "b", ("rand", -0.4, 0.4)),
+                    ),
+                    radius: 0.2,
+                    material: RandomChoiceWeighted([
+                        (16, Lambertian(albedo: (
+                            ("rand", 0, 1),
+                            ("rand", 0, 1),
+                            ("rand", 0, 1),
+                        ))),
+                        (3, Metal(
+                            albedo: (
+                                ("rand", 0, 1),
+                                ("rand", 0, 1),
+                                ("rand", 0, 1),
+                            ),
+                            fuzziness: ("rand", 0, 0.5)
+                        )),
+                        (1, Shared("glass")),
+                    ])
+                ),
+            )
+        ),
+
+        Sphere (
+            center: (0, 1, 0),
+            radius: 1.0,
+            material: Shared("glass")
+        ),
+        Sphere (
+            center: (-4, 1, 0),
+            radius: 1.0,
+            material: Shared("big_diffuse")
+        ),
+        Sphere (
+            center: (4, 1, 0),
+            radius: 1.0,
+            material: Shared("big_metal")
+        ),
+    ]
+)

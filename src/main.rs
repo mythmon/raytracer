@@ -5,13 +5,13 @@ mod hittable;
 mod interpolate;
 mod loader;
 mod material;
-mod scenes;
 
 use crate::{
     geom::{Color, Ray},
     hittable::HittableList,
 };
 use anyhow::{Context, Result};
+use clap::Parser;
 use hittable::Hittable;
 use indicatif::{ParallelProgressIterator, ProgressBar, ProgressStyle};
 use interpolate::lerp;
@@ -21,17 +21,23 @@ use rand::{distributions, prelude::Distribution};
 use rayon::prelude::ParallelIterator;
 use std::{
     path::PathBuf,
-    str::FromStr,
     time::{self, Duration},
 };
 
+#[derive(Parser)]
+struct Args {
+    path: PathBuf,
+}
+
 fn main() -> Result<()> {
+    let args = Args::parse();
+
     // Scene
     let config::Scene {
         world,
         camera,
         image,
-    } = loader::load_scene(&PathBuf::from_str("./scenes/material_demo.ron")?)?;
+    } = loader::load_scene(&args.path)?;
 
     // Render
     let bar = ProgressBar::new(image.height as u64 * image.width as u64);
