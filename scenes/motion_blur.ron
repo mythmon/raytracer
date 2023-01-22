@@ -1,0 +1,44 @@
+Scene(
+    image: (
+        width: 640,
+        height: 200,
+        samples_per_pixel: 300,
+        max_depth: 50 
+    ),
+
+    camera: (
+        look_from: (0, 1.5, 20),
+        look_at: (0, 0.5, 0),
+        v_up: (0, 1, 0),
+        vertical_fov: 17,
+        aperture: 0.1,
+        focus_distance: 10,
+        shutter_time: (0, 1),
+    ),
+
+    materials: {
+        "blue": Lambertian(albedo: (0.1, 0.2, 0.8)),
+    },
+
+    objects: [
+        Sphere(
+            center: (0, -1000, -1),
+            radius: 1000,
+            material: Lambertian(albedo: (0.8, 0.8, 0.0)),
+        ),
+        Pattern(
+            var: "x",
+            range: [0, 11],
+            object: 
+            MovingSphere(
+                center: (
+                    (("add", "x", -5), 0.4, 0),
+                    (("add", "x", -5), ("add", 0.4, ("mult", "x", -0.1)), 0),
+                ),
+                time: (0, 1),
+                radius: 0.4,
+                material: Shared("blue"),
+            ),
+        )
+    ]
+)

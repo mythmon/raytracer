@@ -1,8 +1,10 @@
 mod hittable_list;
 mod sphere;
+mod moving_sphere;
 
 pub use hittable_list::HittableList;
 pub use sphere::Sphere;
+pub use moving_sphere::MovingSphere;
 
 use crate::{
     geom::{Point3, Ray, Vec3},

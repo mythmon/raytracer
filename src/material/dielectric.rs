@@ -33,7 +33,7 @@ impl Material for Dielectric {
 
         ScatterResult {
             attenuation: Color::white(),
-            scattered_ray: Some(Ray::new(hit_record.p, direction)),
+            scattered_ray: Some(Ray::new(hit_record.p, direction, ray_in.time)),
         }
     }
 }

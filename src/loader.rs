@@ -6,7 +6,7 @@ use crate::{
     material,
 };
 use anyhow::{anyhow, Context, Result};
-use rand::{thread_rng, Rng, prelude::Distribution};
+use rand::{prelude::Distribution, thread_rng, Rng};
 use ron::extensions::Extensions;
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, path::Path, sync::Arc};
@@ -87,6 +87,15 @@ enum PatternedHittableDesc {
         radius: PatternedValue,
         material: PatternedMaterialDesc,
     },
+    MovingSphere {
+        center: (
+            (PatternedValue, PatternedValue, PatternedValue),
+            (PatternedValue, PatternedValue, PatternedValue),
+        ),
+        time: (PatternedValue, PatternedValue),
+        radius: PatternedValue,
+        material: PatternedMaterialDesc,
+    },
     Pattern {
         var: String,
         range: Vec<i32>,
@@ -137,6 +146,7 @@ impl PatternedValue {
                         Ok(rng.gen_range(a..b))
                     }
                     "add" => Ok(a + b),
+                    "mult" => Ok(a * b),
                     _ => Err(anyhow!("Unknown operation {}", op)),
                 }
             }
@@ -153,6 +163,7 @@ struct CameraDesc {
     vertical_fov: f64,
     aperture: f64,
     focus_distance: f64,
+    shutter_time: Option<(f64, f64)>,
 }
 
 pub fn load_scene(path: &Path) -> Result<Scene> {
@@ -217,6 +228,11 @@ pub fn load_scene(path: &Path) -> Result<Scene> {
         aspect_ratio,
         scene_desc.camera.aperture,
         scene_desc.camera.focus_distance,
+        scene_desc
+            .camera
+            .shutter_time
+            .map(|(a, b)| a..b)
+            .unwrap_or(0.0..0.0),
     );
 
     Ok(Scene {
@@ -266,6 +282,30 @@ fn realize_pattern(
                 radius: radius.eval(&context)?,
                 material: realize_material(materials, (*material).clone(), None)?,
             }),
+
+            PatternedHittableDesc::MovingSphere {
+                ref center,
+                ref time,
+                ref radius,
+                ref material,
+            } => {
+                let c1 = Vec3::new(
+                    center.0.0.eval(&context)?,
+                    center.0.1.eval(&context)?,
+                    center.0.2.eval(&context)?,
+                );
+                let c2 = Vec3::new(
+                    center.1.0.eval(&context)?,
+                    center.1.1.eval(&context)?,
+                    center.1.2.eval(&context)?,
+                );
+                world.add(hittable::MovingSphere {
+                    center: c1..c2,
+                    time: (time.0.eval(&context)?)..(time.1.eval(&context)?),
+                    radius: radius.eval(&context)?,
+                    material: realize_material(materials, (*material).clone(), None)?,
+                })
+            }
 
             PatternedHittableDesc::Pattern {
                 ref var,

@@ -17,7 +17,7 @@ impl Material for Metal {
         let reflected = ray_in.direction.unit_vector().reflect(hit_record.normal);
         let scattered_ray = if reflected.dot(hit_record.normal) > 0.0 {
             let direction = reflected + self.fuzziness * Vec3::rand_unit_vector();
-            Some(Ray::new(hit_record.p, direction))
+            Some(Ray::new(hit_record.p, direction, ray_in.time))
         } else {
             None
         };
