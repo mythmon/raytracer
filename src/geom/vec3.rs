@@ -1,12 +1,13 @@
-use std::{
-    iter::Sum,
-    ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign},
-};
+use crate::geom::Axis;
 use pix::rgb::SRgb8;
 use rand::{distributions::Uniform, prelude::Distribution};
 use serde::{Deserialize, Serialize};
+use std::{
+    iter::Sum,
+    ops::{Add, AddAssign, Div, DivAssign, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign},
+};
 
-#[derive(Copy, Clone, Default, Deserialize, Serialize, Debug)]
+#[derive(Copy, Clone, Default, Deserialize, Serialize, Debug, PartialEq)]
 pub struct Vec3(pub f64, pub f64, pub f64);
 
 pub type Color = Vec3;
@@ -216,5 +217,40 @@ impl Sum for Vec3 {
 impl Distribution<Vec3> for rand::distributions::Standard {
     fn sample<R: rand::Rng + ?Sized>(&self, rng: &mut R) -> Vec3 {
         Vec3(rng.gen(), rng.gen(), rng.gen())
+    }
+}
+
+impl Index<usize> for Vec3 {
+    type Output = f64;
+
+    fn index(&self, index: usize) -> &Self::Output {
+        match index {
+            0 => &self.0,
+            1 => &self.1,
+            2 => &self.2,
+            _ => panic!("index out of bounds"),
+        }
+    }
+}
+
+impl Index<Axis> for Vec3 {
+    type Output = f64;
+
+    fn index(&self, index: Axis) -> &Self::Output {
+        match index {
+            Axis::X => &self.0,
+            Axis::Y => &self.1,
+            Axis::Z => &self.2,
+        }
+    }
+}
+
+impl IndexMut<Axis> for Vec3 {
+    fn index_mut(&mut self, index: Axis) -> &mut Self::Output {
+        match index {
+            Axis::X => &mut self.0,
+            Axis::Y => &mut self.1,
+            Axis::Z => &mut self.2,
+        }
     }
 }

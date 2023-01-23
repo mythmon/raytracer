@@ -1,0 +1,42 @@
+Scene(
+    image: (
+        width: 320,
+        height: 240,
+        samples_per_pixel: 50,
+        max_depth: 50,
+    ),
+
+    camera: (
+        look_from: (5.5, 5, 50),
+        look_at: (14, 15, 0),
+        v_up: (0, 1, 0),
+        vertical_fov: 23,
+        aperture: 0.01,
+        focus_distance: 20,
+    ),
+
+    materials: {
+        "metal": Metal(albedo: (0.8, 0.8, 0.8), fuzziness: 0.01),
+        "red": Lambertian(albedo: (0.8, 0.1, 0.1)),
+    },
+
+    objects: [
+        Pattern(
+            var: "x",
+            range: [0, 31, 1],
+            object: Pattern(
+                var: "y",
+                range: [0, 31, 1],
+                object: Pattern(
+                    var: "z",
+                    range: [0, 31, 1],
+                    object: Sphere(
+                        center: ("x", "y", "z"),
+                        material: Shared("metal"),
+                        radius: 0.2,
+                    )
+                )
+            )
+        )
+    ]
+)

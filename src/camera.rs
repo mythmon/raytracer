@@ -13,7 +13,7 @@ pub struct Camera {
     u: Vec3,
     v: Vec3,
     // w: Vec3,
-    shutter_time: Range<f64>,
+    pub shutter_time: Range<f64>,
 }
 
 impl Camera {

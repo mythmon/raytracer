@@ -1,6 +1,10 @@
 use std::{ops::Range, sync::Arc};
 
-use crate::{geom::Point3, interpolate::lerp, material::Material};
+use crate::{
+    geom::{Aabb, Point3, Vec3},
+    interpolate::lerp,
+    material::Material,
+};
 
 use super::{Hittable, Sphere};
 
@@ -32,5 +36,17 @@ impl Hittable for MovingSphere {
             material: self.material.clone(),
         };
         fixed.hit(ray, t_range)
+    }
+
+    fn bounding_box(&self, time_range: Range<f64>) -> Option<Aabb> {
+        let box_start = Aabb::new(
+            self.center_at(time_range.start) - Vec3::new(self.radius, self.radius, self.radius),
+            self.center_at(time_range.start) + Vec3::new(self.radius, self.radius, self.radius),
+        );
+        let box_end = Aabb::new(
+            self.center_at(time_range.end) - Vec3::new(self.radius, self.radius, self.radius),
+            self.center_at(time_range.end) + Vec3::new(self.radius, self.radius, self.radius),
+        );
+        Aabb::surrounding(&[&box_start, &box_end])
     }
 }

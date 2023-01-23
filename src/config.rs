@@ -1,9 +1,9 @@
 use serde::{Serialize, Deserialize};
 
-use crate::{hittable::HittableList, camera::Camera};
+use crate::{hittable::Hittable, camera::Camera};
 
-pub struct Scene {
-    pub world: HittableList,
+pub struct Scene<H: Hittable> {
+    pub world: H,
     pub camera: Camera,
     pub image: ImageConfig
 }

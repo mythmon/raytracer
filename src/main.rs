@@ -8,7 +8,7 @@ mod material;
 
 use crate::{
     geom::{Color, Ray},
-    hittable::HittableList,
+    hittable::BvhNode,
 };
 use anyhow::{Context, Result};
 use clap::Parser;
@@ -55,7 +55,7 @@ fn main() -> Result<()> {
     }
     struct ParallelWorkItem<'a> {
         pixels: &'a mut [LocatedPixel<'a>],
-        world: HittableList,
+        world: BvhNode,
     }
 
     let mut pixels = raster

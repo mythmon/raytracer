@@ -1,5 +1,5 @@
 use crate::{
-    geom::{Point3, Ray},
+    geom::{Point3, Ray, Aabb, Vec3},
     hittable::{HitRecord, Hittable},
     material::Material,
 };
@@ -47,5 +47,12 @@ impl Hittable for Sphere {
                 self.material.clone(),
             ))
         }
+    }
+
+    fn bounding_box(&self, _time_range: Range<f64>) -> Option<Aabb> {
+        Some(Aabb::new(
+            self.center - Vec3::new(self.radius, self.radius, self.radius),
+            self.center + Vec3::new(self.radius, self.radius, self.radius),
+        ))
     }
 }

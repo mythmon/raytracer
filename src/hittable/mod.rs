@@ -1,13 +1,15 @@
 mod hittable_list;
 mod sphere;
 mod moving_sphere;
+mod bvh;
 
 pub use hittable_list::HittableList;
 pub use sphere::Sphere;
 pub use moving_sphere::MovingSphere;
+pub use bvh::BvhNode;
 
 use crate::{
-    geom::{Point3, Ray, Vec3},
+    geom::{Point3, Ray, Vec3, Aabb},
     material::Material,
 };
 use dyn_clonable::clonable;
@@ -16,6 +18,7 @@ use std::{ops::Range, sync::Arc};
 #[clonable]
 pub trait Hittable: Send + Sync + Clone {
     fn hit(&self, ray: &Ray, t_range: Range<f64>) -> Option<HitRecord>;
+    fn bounding_box(&self, time_range: Range<f64>) -> Option<Aabb>;
 }
 
 pub struct HitRecord {

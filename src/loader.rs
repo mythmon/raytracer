@@ -2,7 +2,7 @@ use crate::{
     camera::Camera,
     config::{self, Scene},
     geom::{Color, Point3, Vec3},
-    hittable::{self, HittableList},
+    hittable::{self, BvhNode, Hittable},
     material,
 };
 use anyhow::{anyhow, Context, Result};
@@ -166,7 +166,7 @@ struct CameraDesc {
     shutter_time: Option<(f64, f64)>,
 }
 
-pub fn load_scene(path: &Path) -> Result<Scene> {
+pub fn load_scene(path: &Path) -> Result<Scene<BvhNode>> {
     let f = std::fs::File::open(path).context("opening scene file")?;
 
     let ron_options = ron::Options::default().with_default_extension(Extensions::IMPLICIT_SOME);
@@ -177,7 +177,7 @@ pub fn load_scene(path: &Path) -> Result<Scene> {
         materials.insert(key, realize_material(&materials, desc, None)?);
     }
 
-    let mut world = HittableList::default();
+    let mut hittables: Vec<Box<dyn Hittable>> = vec![];
     for desc in scene_desc.objects.into_iter() {
         match desc {
             HittableDesc::Sphere {
@@ -203,14 +203,14 @@ pub fn load_scene(path: &Path) -> Result<Scene> {
                     }
                 };
 
-                world.add(hittable::Sphere {
+                hittables.push(Box::new(hittable::Sphere {
                     center,
                     radius,
                     material,
-                })
+                }))
             }
             HittableDesc::Pattern { var, range, object } => {
-                realize_pattern(&mut world, var, &range[..], &*object, None, &materials)?;
+                realize_pattern(&mut hittables, var, &range[..], &*object, None, &materials)?;
             }
         };
     }
@@ -236,7 +236,7 @@ pub fn load_scene(path: &Path) -> Result<Scene> {
     );
 
     Ok(Scene {
-        world,
+        world: BvhNode::new(camera.shutter_time.clone(), hittables),
         camera,
         image: scene_desc.image,
     })
@@ -248,7 +248,7 @@ struct PatternContext {
 }
 
 fn realize_pattern(
-    world: &mut HittableList,
+    hittables: &mut Vec<Box<dyn Hittable>>,
     var: String,
     range: &[i32],
     object: &PatternedHittableDesc,
@@ -273,7 +273,7 @@ fn realize_pattern(
                 ref center,
                 ref radius,
                 ref material,
-            } => world.add(hittable::Sphere {
+            } => hittables.push(Box::new(hittable::Sphere {
                 center: Vec3::new(
                     center.0.eval(&context)?,
                     center.1.eval(&context)?,
@@ -281,7 +281,7 @@ fn realize_pattern(
                 ),
                 radius: radius.eval(&context)?,
                 material: realize_material(materials, (*material).clone(), None)?,
-            }),
+            })),
 
             PatternedHittableDesc::MovingSphere {
                 ref center,
@@ -299,12 +299,12 @@ fn realize_pattern(
                     center.1.1.eval(&context)?,
                     center.1.2.eval(&context)?,
                 );
-                world.add(hittable::MovingSphere {
+                hittables.push(Box::new(hittable::MovingSphere {
                     center: c1..c2,
                     time: (time.0.eval(&context)?)..(time.1.eval(&context)?),
                     radius: radius.eval(&context)?,
                     material: realize_material(materials, (*material).clone(), None)?,
-                })
+                }))
             }
 
             PatternedHittableDesc::Pattern {
@@ -313,7 +313,7 @@ fn realize_pattern(
                 ref object,
             } => {
                 realize_pattern(
-                    world,
+                    hittables,
                     var.clone(),
                     range,
                     object,
