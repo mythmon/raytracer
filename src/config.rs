@@ -1,11 +1,10 @@
-use serde::{Serialize, Deserialize};
-
-use crate::{hittable::Hittable, camera::Camera};
+use crate::{camera::Camera, hittable::Hittable};
+use serde::{Deserialize, Serialize};
 
 pub struct Scene<H: Hittable> {
     pub world: H,
     pub camera: Camera,
-    pub image: ImageConfig
+    pub image: ImageConfig,
 }
 
 #[derive(Serialize, Deserialize, Debug)]

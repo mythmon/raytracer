@@ -1,9 +1,7 @@
 use ordered_float::OrderedFloat;
-
 use crate::geom::{Point3, Ray};
+use crate::geom::Axis;
 use std::ops::Range;
-
-use super::Axis;
 
 /// Axis-aligned bounding box
 #[derive(Clone, PartialEq, Debug)]

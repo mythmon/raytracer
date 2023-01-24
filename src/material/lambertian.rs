@@ -1,11 +1,11 @@
 use crate::{
-    geom::{Color, Ray, Vec3},
+    geom::{Ray, Vec3},
     hittable::HitRecord,
-    material::{Material, ScatterResult},
+    material::{Material, ScatterResult}, texture::Texture,
 };
 
 pub struct Lambertian {
-    pub albedo: Color,
+    pub albedo: Box<dyn Texture>,
 }
 
 impl Material for Lambertian {
@@ -18,7 +18,7 @@ impl Material for Lambertian {
         }
 
         ScatterResult {
-            attenuation: self.albedo,
+            attenuation: self.albedo.value(hit_record.u, hit_record.v, hit_record.p),
             scattered_ray: Some(Ray::new(hit_record.p, scatter_direction, ray_in.time)),
         }
     }

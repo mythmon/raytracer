@@ -5,6 +5,7 @@ mod hittable;
 mod interpolate;
 mod loader;
 mod material;
+mod texture;
 
 use crate::{
     geom::{Color, Ray},

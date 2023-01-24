@@ -1,0 +1,32 @@
+Scene(
+    image: (
+        width: 800,
+        height: 600,
+        samples_per_pixel: 500,
+        max_depth: 50,
+    ),
+
+    camera: (
+        look_from: (13, 2, 3),
+        vertical_fov: 20,
+        aperture: 0.1,
+    ),
+
+    materials: {
+        "checker": Lambertian(albedo: Checkerboard(Solid(0.2, 0.3, 0.1), Solid(0.9, 0.9, 0.9))),
+        "mirror": Metal(albedo: (0.9, 0.9, 0.9), fuzziness: 0.02),
+    },
+
+    objects: [
+        Sphere(
+            center: (0, -10, 0),
+            radius: 10,
+            material: Shared("checker")
+        ),
+        Sphere(
+            center: (0, 10, 0),
+            radius: 10,
+            material: Shared("mirror")
+        ),
+    ]
+)
