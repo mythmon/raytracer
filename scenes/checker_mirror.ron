@@ -2,19 +2,19 @@ Scene(
     image: (
         width: 800,
         height: 600,
-        samples_per_pixel: 500,
+        samples_per_pixel: 100,
         max_depth: 50,
     ),
 
     camera: (
         look_from: (13, 2, 3),
         vertical_fov: 20,
-        aperture: 0.1,
+        aperture: 0.0,
     ),
 
     materials: {
         "checker": Lambertian(albedo: Checkerboard(Solid(0.2, 0.3, 0.1), Solid(0.9, 0.9, 0.9))),
-        "mirror": Metal(albedo: (0.9, 0.9, 0.9), fuzziness: 0.02),
+        "mirror": Metal(albedo: (0.9, 0.95, 0.9), fuzziness: 0.0),
     },
 
     objects: [
@@ -28,5 +28,10 @@ Scene(
             radius: 10,
             material: Shared("mirror")
         ),
+        Sphere(
+            center: (2, 0, 2),
+            radius: 0.2,
+            material: Lambertian(albedo: Solid(0.8, 0.1, 0.1)),
+        )
     ]
 )
