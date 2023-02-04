@@ -4,7 +4,7 @@ use crate::{
     geom::{Color, Point3, Vec3},
     hittable::{self, BvhNode, Hittable},
     material,
-    texture::{Checkerboard, SolidColor, Texture},
+    texture::{Checkerboard, SolidColor, Texture, Perlin},
 };
 use anyhow::{anyhow, Context, Result};
 use rand::{prelude::Distribution, thread_rng, Rng};
@@ -26,6 +26,7 @@ struct SceneDesc {
 enum TextureDesc {
     Solid(f64, f64, f64),
     Checkerboard(Box<TextureDesc>, Box<TextureDesc>),
+    Perlin,
 }
 
 impl From<f64> for Value {
@@ -365,6 +366,7 @@ fn realize_texture(desc: TextureDesc) -> Box<dyn Texture> {
             realize_texture(*even),
             realize_texture(*odd),
         )),
+        TextureDesc::Perlin => Box::new(Perlin::default())
     }
 }
 
