@@ -18,9 +18,9 @@ impl Sphere {
     /// - `u` a value in `0..=1`, the angle around the Y axis, from X=-1 to X=+1
     /// - `v` a value in `0..=1`, the angle around the X axis, rfom Y=-1 to Y=+1
     fn get_uv(p: Point3) -> (f64, f64) {
-        let theta = p.y().acos();
-        let phi = f64::atan2(-p.z(), p.x()) + PI;
-        (phi / 2.0 * PI, theta / PI)
+        let theta = (-p.y()).acos();
+        let phi = (-p.z()).atan2(p.x()) + PI;
+        (phi / (2.0 * PI), theta / PI)
     }
 }
 

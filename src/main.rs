@@ -9,7 +9,7 @@ mod texture;
 
 use crate::{
     geom::{Color, Ray},
-    hittable::BvhNode,
+    hittable::BvhNode, loader::SceneLoader,
 };
 use anyhow::{Context, Result};
 use clap::Parser;
@@ -34,11 +34,12 @@ fn main() -> Result<()> {
     let args = Args::parse();
 
     // Scene
+    let loader = SceneLoader::new(&args.path);
     let config::Scene {
         world,
         camera,
         image,
-    } = loader::load_scene(&args.path)?;
+    } = loader.load()?;
 
     // Render
     let bar = ProgressBar::new(image.height as u64 * image.width as u64);

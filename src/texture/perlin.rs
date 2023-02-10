@@ -1,5 +1,5 @@
 use rand::{seq::SliceRandom, thread_rng, Rng};
-use crate::{texture::Texture, geom::{Color, Point3, Vec3}, interpolate::trilinear_interp};
+use crate::{texture::Texture, geom::{Color, Point3, Vec3}};
 
 pub struct Perlin {
     rand_vec: Vec<Vec3>,

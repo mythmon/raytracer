@@ -1,4 +1,5 @@
 use crate::geom::Axis;
+use image::Rgb;
 use pix::rgb::SRgb8;
 use rand::{distributions::Uniform, prelude::Distribution};
 use serde::{Deserialize, Serialize};
@@ -263,5 +264,15 @@ impl IndexMut<Axis> for Vec3 {
             Axis::Y => &mut self.1,
             Axis::Z => &mut self.2,
         }
+    }
+}
+
+impl Into<Color> for &Rgb<u8> {
+    fn into(self) -> Color {
+        let scale = 1.0 / 255.0;
+        let r = self.0[0] as f64 * scale;
+        let g = self.0[1] as f64 * scale;
+        let b = self.0[2] as f64 * scale;
+        Vec3(r, g, b)
     }
 }

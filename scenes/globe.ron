@@ -1,0 +1,24 @@
+Scene(
+    image: (
+        width: 800,
+        height: 600,
+        samples_per_pixel: 100,
+        max_depth: 50 
+    ),
+
+    camera: (
+        look_from: (13, 2, 3),
+        vertical_fov: 20,
+        aperture: 0,
+    ),
+
+    materials: {},
+
+    objects: [
+        Sphere(
+            center: (0, 0, 0),
+            radius: 2,
+            material: Lambertian(albedo: Image("./earthmap.jpg")),
+        ),
+    ]
+)
