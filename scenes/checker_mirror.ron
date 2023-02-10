@@ -12,6 +12,8 @@ Scene(
         aperture: 0.0,
     ),
 
+    background: (0.7, 0.8, 1.0),
+
     materials: {
         "checker": Lambertian(albedo: Checkerboard(Solid(0.2, 0.3, 0.1), Solid(0.9, 0.9, 0.9))),
         "mirror": Metal(albedo: (0.9, 0.95, 0.9), fuzziness: 0.0),

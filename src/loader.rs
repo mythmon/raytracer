@@ -1,8 +1,8 @@
 use crate::{
     camera::Camera,
     config::{self, Scene},
-    geom::{Color, Point3, Vec3},
-    hittable::{self, BvhNode, Hittable},
+    geom::{Color, Point3, Vec3, Axis},
+    hittable::{self, AxisAlignedRect, BvhNode, Hittable},
     material,
     texture::{self, Checkerboard, Perlin, SolidColor, Texture},
 };
@@ -23,6 +23,7 @@ struct SceneDesc {
     objects: Vec<HittableDesc>,
     camera: CameraDesc,
     image: config::ImageConfig,
+    background: Option<(Value, Value, Value)>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -64,6 +65,13 @@ enum HittableDesc {
         range: Vec<i32>,
         object: Box<HittableDesc>,
     },
+    AARect {
+        center: (Value, Value, Value),
+        width: Value,
+        height: Value,
+        axis: AxisDesc,
+        material: MaterialDesc,
+    },
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -71,7 +79,15 @@ enum HittableDesc {
 enum Value {
     Var(String),
     Number(f64),
-    BinOp(String, Box<Value>, Box<Value>),
+    BinOp(BinOp, Box<Value>, Box<Value>),
+}
+
+#[derive(Serialize, Deserialize, Copy, Clone, Debug)]
+#[serde(rename = "lowercase")]
+enum BinOp {
+    Add,
+    Mult,
+    Rand,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -87,6 +103,9 @@ enum MaterialDesc {
     },
     Dielectric {
         index_of_refraction: Value,
+    },
+    DiffuseLight {
+        color: TextureDesc,
     },
     RandomChoice(Vec<Box<MaterialDesc>>),
     RandomChoiceWeighted(Vec<(f64, Box<MaterialDesc>)>),
@@ -104,14 +123,13 @@ impl Value {
             Value::BinOp(op, a, b) => {
                 let a = a.eval(loader)?;
                 let b = b.eval(loader)?;
-                match op.as_str() {
-                    "rand" => {
+                match op {
+                    BinOp::Rand => {
                         let mut rng = thread_rng();
                         Ok(rng.gen_range(a..b))
                     }
-                    "add" => Ok(a + b),
-                    "mult" => Ok(a * b),
-                    _ => Err(anyhow!("Unknown operation {}", op)),
+                    BinOp::Add=> Ok(a + b),
+                    BinOp::Mult => Ok(a * b),
                 }
             }
         }
@@ -128,6 +146,24 @@ struct CameraDesc {
     aperture: f64,
     focus_distance: Option<f64>,
     shutter_time: Option<(f64, f64)>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Copy, Clone)]
+#[serde(rename = "Axis")]
+enum AxisDesc {
+    X,
+    Y,
+    Z,
+}
+
+impl From<AxisDesc> for Axis {
+    fn from(value: AxisDesc) -> Self {
+        match value {
+            AxisDesc::X => Axis::X,
+            AxisDesc::Y => Axis::Y,
+            AxisDesc::Z => Axis::Z,
+        }
+    }
 }
 
 pub struct SceneLoader {
@@ -163,20 +199,11 @@ impl SceneLoader {
                     material,
                     center,
                     radius,
-                } => {
-                    let material = self.realize_material(material)?;
-                    let center = Point3::new(
-                        center.0.eval(&self)?,
-                        center.1.eval(&self)?,
-                        center.2.eval(&self)?,
-                    );
-
-                    hittables.push(Box::new(hittable::Sphere {
-                        center,
-                        radius: radius.eval(&self)?,
-                        material,
-                    }))
-                }
+                } => hittables.push(Box::new(hittable::Sphere {
+                    center: self.eval_vec3(center)?,
+                    radius: radius.eval(&self)?,
+                    material: self.realize_material(material)?,
+                })),
                 HittableDesc::MovingSphere {
                     center,
                     time,
@@ -186,6 +213,19 @@ impl SceneLoader {
                     center: (self.eval_vec3(center.0)?)..(self.eval_vec3(center.1)?),
                     time: (time.0.eval(&self)?)..(time.1.eval(&self)?),
                     radius: radius.eval(&self)?,
+                    material: self.realize_material(material)?,
+                })),
+                HittableDesc::AARect {
+                    center,
+                    width,
+                    height,
+                    axis,
+                    material,
+                } => hittables.push(Box::new(AxisAlignedRect {
+                    center: self.eval_vec3(center)?,
+                    width: width.eval(&self)?,
+                    height: height.eval(&self)?,
+                    axis: axis.into(),
                     material: self.realize_material(material)?,
                 })),
                 HittableDesc::Pattern { var, range, object } => {
@@ -223,6 +263,10 @@ impl SceneLoader {
             world: BvhNode::new(camera.shutter_time.clone(), hittables),
             camera,
             image: scene_desc.image,
+            background: scene_desc
+                .background
+                .map(|v| self.eval_vec3(v))
+                .unwrap_or_else(|| Ok(Color::black()))?,
         })
     }
 
@@ -250,11 +294,7 @@ impl SceneLoader {
                     ref radius,
                     ref material,
                 } => hittables.push(Box::new(hittable::Sphere {
-                    center: Vec3::new(
-                        center.0.eval(&self)?,
-                        center.1.eval(&self)?,
-                        center.2.eval(&self)?,
-                    ),
+                    center: self.eval_vec3(center.clone())?,
                     radius: radius.eval(&self)?,
                     material: self.realize_material((*material).clone())?,
                 })),
@@ -265,16 +305,8 @@ impl SceneLoader {
                     ref radius,
                     ref material,
                 } => {
-                    let c1 = Vec3::new(
-                        center.0 .0.eval(&self)?,
-                        center.0 .1.eval(&self)?,
-                        center.0 .2.eval(&self)?,
-                    );
-                    let c2 = Vec3::new(
-                        center.1 .0.eval(&self)?,
-                        center.1 .1.eval(&self)?,
-                        center.1 .2.eval(&self)?,
-                    );
+                    let c1 = self.eval_vec3(center.0.clone())?;
+                    let c2 = self.eval_vec3(center.1.clone())?;
                     hittables.push(Box::new(hittable::MovingSphere {
                         center: c1..c2,
                         time: (time.0.eval(&self)?)..(time.1.eval(&self)?),
@@ -282,6 +314,20 @@ impl SceneLoader {
                         material: self.realize_material((*material).clone())?,
                     }))
                 }
+
+                HittableDesc::AARect {
+                    ref center,
+                    ref width,
+                    ref height,
+                    ref axis,
+                    ref material,
+                } => hittables.push(Box::new(AxisAlignedRect {
+                    center: self.eval_vec3(center.clone())?,
+                    width: width.eval(&self)?, 
+                    height: height.eval(&self)?, 
+                    axis: (*axis).into(),
+                    material: self.realize_material((*material).clone())?,
+                })),
 
                 HittableDesc::Pattern {
                     ref var,
@@ -318,12 +364,11 @@ impl SceneLoader {
                     .context("evaluating index_of_refraction")?,
             }),
             MaterialDesc::Metal { albedo, fuzziness } => Arc::new(material::Metal {
-                albedo: Color::new(
-                    albedo.0.eval(&self).context("evaluating albedo r")?,
-                    albedo.1.eval(&self).context("evaluating albedo g")?,
-                    albedo.2.eval(&self).context("evaluating albedo b")?,
-                ),
+                albedo: self.eval_vec3(albedo)?,
                 fuzziness: fuzziness.eval(&self).context("evaluating fuzziness")?,
+            }),
+            MaterialDesc::DiffuseLight { color } => Arc::new(material::DiffuseLight {
+                texture: self.realize_texture(color)?,
             }),
             MaterialDesc::RandomChoice(options) => {
                 let mut rng = thread_rng();

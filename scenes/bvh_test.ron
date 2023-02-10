@@ -15,6 +15,8 @@ Scene(
         focus_distance: 20,
     ),
 
+    background: (0.7, 0.8, 1.0),
+
     materials: {
         "metal": Metal(albedo: (0.8, 0.8, 0.8), fuzziness: 0.01),
         "red": Lambertian(albedo: (0.8, 0.1, 0.1)),

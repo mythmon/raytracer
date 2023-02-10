@@ -1,0 +1,79 @@
+Scene(
+    image: (
+        width: 600,
+        height: 600,
+        samples_per_pixel: 400,
+        max_depth: 50 
+    ),
+
+    camera: (
+        look_from: (277.5, 277.5, -800),
+        look_at: (277.5, 277.5, 0),
+        vertical_fov: 40,
+        aperture: 0,
+    ),
+
+    background: (0.0, 0.0, 0.0),
+
+    materials: {
+        "red": Lambertian(albedo: Solid(0.65, 0.05, 0.05)),
+        "white": Lambertian(albedo: Solid(0.73, 0.73, 0.73)),
+        "green": Lambertian(albedo: Solid(0.12, 0.45, 0.15)),
+        "light": DiffuseLight(color: Solid(15, 15, 15)),
+    },
+
+    objects: [
+        AARect (
+            center: (555, 277.5, 277.5),
+            axis: X,
+            width: 555,
+            height: 555,
+            material: Shared("green"),
+        ),
+        AARect (
+            center: (0, 277.5, 277.5),
+            axis: X,
+            width: 555,
+            height: 555,
+            material: Shared("red"),
+        ),
+        AARect (
+            center: (278, 554, 279.5),
+            axis: Y,
+            width: 130,
+            height: 105,
+            material: Shared("light"),
+        ),
+        AARect (
+            center: (277.5, 0, 277.5),
+            axis: Y,
+            width: 555,
+            height: 555,
+            material: Shared("white"),
+        ),
+        AARect (
+            center: (277.5, 555, 277.5),
+            axis: Y,
+            width: 555,
+            height: 555,
+            material: Shared("white"),
+        ),
+        AARect (
+            center: (277.5, 277.5, 555),
+            axis: Z,
+            width: 555,
+            height: 555,
+            material: Shared("white"),
+        ),
+        Cuboid (
+            center: (212.5, 82.5, 82.5),
+            size: (165, 165, 165)
+            material: Shared("white"),
+        ),
+        Cuboid (
+            center: (247.5, 165, 377.5),
+            size: (165, 330, 165)
+            material: Shared("white"),
+        ),
+    ]
+)

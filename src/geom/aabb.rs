@@ -1,7 +1,9 @@
 use ordered_float::OrderedFloat;
 use crate::geom::{Point3, Ray};
 use crate::geom::Axis;
-use std::ops::Range;
+use std::ops::{Range, RangeInclusive};
+
+use super::Vec3;
 
 /// Axis-aligned bounding box
 #[derive(Clone, PartialEq, Debug)]
@@ -43,6 +45,30 @@ impl Aabb {
             if t_max <= t_min { return false }
         }
         return true;
+    }
+
+    pub fn span(&self) -> Vec3 {
+        self.max - self.min
+    }
+
+    pub fn range(&self, axis: Axis) -> RangeInclusive<f64> {
+        match axis {
+            Axis::X => self.x_range(),
+            Axis::Y => self.y_range(),
+            Axis::Z => self.z_range(),
+        }
+    }
+
+    pub fn x_range(&self) -> RangeInclusive<f64> {
+        self.min.x()..=self.max.x()
+    }
+
+    pub fn y_range(&self) -> RangeInclusive<f64> {
+        self.min.y()..=self.max.y()
+    }
+
+    pub fn z_range(&self) -> RangeInclusive<f64> {
+        self.min.z()..=self.max.z()
     }
 }
 

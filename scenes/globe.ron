@@ -12,6 +12,8 @@ Scene(
         aperture: 0,
     ),
 
+    background: (0.7, 0.8, 1.0),
+
     materials: {},
 
     objects: [

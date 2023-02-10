@@ -23,6 +23,10 @@ impl Vec3 {
         Self(1.0, 1.0, 1.0)
     }
 
+    pub fn black() -> Self {
+        Self(0.0, 0.0, 0.0)
+    }
+
     pub fn rand_unit_vector() -> Self {
         let between = Uniform::new_inclusive(-1.0, 1.0);
         let mut rng = rand::thread_rng();

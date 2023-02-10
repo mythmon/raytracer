@@ -1,18 +1,17 @@
 Scene(
     image: (
-        width: 800,
-        height: 600,
-        samples_per_pixel: 100,
+        width: 640,
+        height: 360,
+        samples_per_pixel: 400,
         max_depth: 50 
     ),
 
     camera: (
-        look_from: (13, 2, 3),
-        vertical_fov: 20,
+        look_from: (26, 3, 6),
+        look_at: (0, 2, 0),
+        vertical_fov: 15,
         aperture: 0,
     ),
-
-    background: (0.7, 0.8, 1.0),
 
     materials: {},
 
@@ -27,5 +26,12 @@ Scene(
             radius: 2,
             material: Lambertian(albedo: Perlin),
         ),
+        AARect(
+            center: (4, 2, -2),
+            width: 2,
+            height: 2,
+            axis: Z,
+            material: DiffuseLight(color: Solid(4, 4, 4)),
+        )
     ]
 )

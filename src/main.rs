@@ -9,13 +9,12 @@ mod texture;
 
 use crate::{
     geom::{Color, Ray},
-    hittable::BvhNode, loader::SceneLoader,
+    hittable::BvhNode, loader::SceneLoader, config::Scene,
 };
 use anyhow::{Context, Result};
 use clap::Parser;
 use hittable::Hittable;
 use indicatif::{ParallelProgressIterator, ProgressBar, ProgressStyle};
-use interpolate::lerp;
 use pix::rgb::SRgb8;
 use png_pong::PngRaster;
 use rand::{distributions, prelude::Distribution};
@@ -35,10 +34,11 @@ fn main() -> Result<()> {
 
     // Scene
     let loader = SceneLoader::new(&args.path);
-    let config::Scene {
+    let Scene {
         world,
         camera,
         image,
+        background,
     } = loader.load()?;
 
     // Render
@@ -109,7 +109,7 @@ fn main() -> Result<()> {
                         let v = ((image.height as usize - *y) as f64 + jy)
                             / (image.height as f64 - 1.0);
                         let ray = camera.get_ray(u, v);
-                        ray_color(ray, &world, image.max_depth)
+                        ray_color(ray,  background, &world, image.max_depth)
                     })
                     .sum();
                 **pixel = color.into_srgb8(image.samples_per_pixel);
@@ -134,7 +134,7 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-fn ray_color<H: Hittable>(ray: Ray, hittable: &H, depth_budget: u32) -> Color {
+fn ray_color<H: Hittable>(ray: Ray, background: Color, hittable: &H, depth_budget: u32) -> Color {
     if depth_budget == 0 {
         Color::default()
     } else if let Some(hit_record) = hittable.hit(&ray, 0.001..f64::INFINITY) {
@@ -142,15 +142,15 @@ fn ray_color<H: Hittable>(ray: Ray, hittable: &H, depth_budget: u32) -> Color {
             let material = hit_record.material.clone();
             material.scatter(&ray, &hit_record)
         };
+        let emitted = hit_record.material.emitted(hit_record.u, hit_record.v, hit_record.p);
         if let Some(scattered) = scatter_record.scattered_ray {
-            return scatter_record.attenuation * ray_color(scattered, hittable, depth_budget - 1);
+            let bounce_color = ray_color(scattered, background, hittable, depth_budget - 1);
+            emitted + scatter_record.attenuation * bounce_color
         } else {
-            Color::default()
+            emitted
         }
     } else {
-        let unit = ray.direction.unit_vector();
-        let t = 0.5 * (unit.y() + 1.0);
-        lerp(Color::new(1.0, 1.0, 1.0), Color::new(0.5, 0.7, 1.0), t) // blue
+        background
     }
 }
 
