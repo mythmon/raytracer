@@ -38,13 +38,13 @@ impl SceneLoader {
         let scene_desc: desc::SceneDesc =
             ron_options.from_reader(f).context("loading scene file")?;
 
-        for (key, desc) in scene_desc.materials.into_iter() {
+        for (key, desc) in scene_desc.materials {
             let material = self.realize_material(desc)?;
             self.materials.insert(key, material);
         }
 
         let mut hittables: Vec<Box<dyn Hittable>> = vec![];
-        for desc in scene_desc.objects.into_iter() {
+        for desc in scene_desc.objects {
             match desc {
                 desc::HittableDesc::Sphere {
                     material,
@@ -80,35 +80,31 @@ impl SceneLoader {
                     material: self.realize_material(material)?,
                 })),
                 desc::HittableDesc::Pattern { var, range, object } => {
-                    self.realize_pattern(&mut hittables, var, &range[..], &*object)?;
+                    self.realize_pattern(&mut hittables, &var, &range[..], &object)?;
                 }
             };
         }
 
-        let aspect_ratio = scene_desc.image.width as f64 / scene_desc.image.height as f64;
-        let look_from = scene_desc.camera.look_from;
-        let look_at = scene_desc.camera.look_at.unwrap_or_default();
+        let mut camera_builder = Camera::build()
+            .look_from(scene_desc.camera.look_from)
+            .aspect_ratio(scene_desc.image.width as f64 / scene_desc.image.height as f64)
+            .vertical_fov(scene_desc.camera.vertical_fov)
+            .aperture(scene_desc.camera.aperture);
 
-        let camera = Camera::new(
-            look_from,
-            look_at,
-            scene_desc
-                .camera
-                .v_up
-                .unwrap_or_else(|| Vec3::new(0.0, 1.0, 0.0)),
-            scene_desc.camera.vertical_fov,
-            aspect_ratio,
-            scene_desc.camera.aperture,
-            scene_desc
-                .camera
-                .focus_distance
-                .unwrap_or_else(|| (look_at - look_from).length()),
-            scene_desc
-                .camera
-                .shutter_time
-                .map(|(a, b)| a..b)
-                .unwrap_or(0.0..0.0),
-        );
+        if let Some(look_at) = scene_desc.camera.look_at {
+            camera_builder = camera_builder.look_at(look_at);
+        }
+        if let Some(v_up) = scene_desc.camera.v_up {
+            camera_builder = camera_builder.v_up(v_up);
+        }
+        if let Some(focus_distance) = scene_desc.camera.focus_distance {
+            camera_builder = camera_builder.focus_dist(focus_distance);
+        }
+        if let Some((start, end)) = scene_desc.camera.shutter_time {
+            camera_builder = camera_builder.shutter_time(start..end);
+        }
+
+        let camera = camera_builder.done()?;
 
         Ok(Scene {
             world: BvhNode::new(camera.shutter_time.clone(), hittables),
@@ -116,22 +112,21 @@ impl SceneLoader {
             image: scene_desc.image,
             background: scene_desc
                 .background
-                .map(|v| self.eval_vec3(v))
-                .unwrap_or_else(|| Ok(Color::black()))?,
+                .map_or_else(|| Ok(Color::black()), |v| self.eval_vec3(v))?,
         })
     }
 
     pub(crate) fn realize_pattern(
         &mut self,
         hittables: &mut Vec<Box<dyn Hittable>>,
-        var: String,
+        var: &str,
         range: &[i32],
         object: &desc::HittableDesc,
     ) -> Result<()> {
         let range = match range {
             &[end] => (0..end).step_by(1),
             &[start, end] => (start..end).step_by(1),
-            &[start, end, step] => (start..end).step_by(step as usize),
+            &[start, end, step] => (start..end).step_by(step.unsigned_abs() as usize),
             unexpected => {
                 anyhow::bail!("Unexpected format for range: {:?}", unexpected);
             }
@@ -146,7 +141,7 @@ impl SceneLoader {
                     ref material,
                 } => hittables.push(Box::new(hittable::Sphere {
                     center: self.eval_vec3(center.clone())?,
-                    radius: radius.eval(&self)?,
+                    radius: radius.eval(self)?,
                     material: self.realize_material((*material).clone())?,
                 })),
 
@@ -160,10 +155,10 @@ impl SceneLoader {
                     let c2 = self.eval_vec3(center.1.clone())?;
                     hittables.push(Box::new(hittable::MovingSphere {
                         center: c1..c2,
-                        time: (time.0.eval(&self)?)..(time.1.eval(&self)?),
-                        radius: radius.eval(&self)?,
+                        time: (time.0.eval(self)?)..(time.1.eval(self)?),
+                        radius: radius.eval(self)?,
                         material: self.realize_material((*material).clone())?,
-                    }))
+                    }));
                 }
 
                 desc::HittableDesc::AARect {
@@ -174,8 +169,8 @@ impl SceneLoader {
                     ref material,
                 } => hittables.push(Box::new(AxisAlignedRect {
                     center: self.eval_vec3(center.clone())?,
-                    width: width.eval(&self)?,
-                    height: height.eval(&self)?,
+                    width: width.eval(self)?,
+                    height: height.eval(self)?,
                     axis: (*axis).into(),
                     material: self.realize_material((*material).clone())?,
                 })),
@@ -185,7 +180,7 @@ impl SceneLoader {
                     ref range,
                     ref object,
                 } => {
-                    self.realize_pattern(hittables, var.clone(), range, object)?;
+                    self.realize_pattern(hittables, var, range, object)?;
                 }
             }
         }
@@ -211,12 +206,12 @@ impl SceneLoader {
                 index_of_refraction,
             } => Arc::new(material::Dielectric {
                 index_of_refraction: index_of_refraction
-                    .eval(&self)
+                    .eval(self)
                     .context("evaluating index_of_refraction")?,
             }),
             desc::MaterialDesc::Metal { albedo, fuzziness } => Arc::new(material::Metal {
                 albedo: self.eval_vec3(albedo)?,
-                fuzziness: fuzziness.eval(&self).context("evaluating fuzziness")?,
+                fuzziness: fuzziness.eval(self).context("evaluating fuzziness")?,
             }),
             desc::MaterialDesc::DiffuseLight { color } => Arc::new(material::DiffuseLight {
                 texture: self.realize_texture(color)?,
@@ -224,7 +219,7 @@ impl SceneLoader {
             desc::MaterialDesc::RandomChoice(options) => {
                 let mut rng = thread_rng();
                 let idx = rng.gen_range(0..options.len());
-                self.realize_material((*options[idx]).clone())?
+                self.realize_material((options[idx]).clone())?
             }
             desc::MaterialDesc::RandomChoiceWeighted(options) => {
                 let dist = rand::distributions::WeightedIndex::new(options.iter().map(|c| c.0))
@@ -243,7 +238,7 @@ impl SceneLoader {
                 self.realize_texture(*even)?,
                 self.realize_texture(*odd)?,
             )),
-            desc::TextureDesc::Perlin => Box::new(texture::Perlin::default()),
+            desc::TextureDesc::Perlin => Box::<texture::Perlin>::default(),
             desc::TextureDesc::Image(path) => {
                 let original = path.to_string_lossy().to_string();
                 let mut dir = self.scene_path.clone();

@@ -55,7 +55,7 @@ impl Hittable for Sphere {
             Some(HitRecord::new(
                 p,
                 t,
-                &ray,
+                ray,
                 outward_normal,
                 self.material.clone(),
                 u,

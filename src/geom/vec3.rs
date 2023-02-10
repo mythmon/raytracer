@@ -115,7 +115,7 @@ impl Vec3 {
         self.0.abs() < LIMIT && self.1.abs() < LIMIT && self.2.abs() < LIMIT
     }
 
-    pub fn into_srgb8(&self, samples_per_pixel: u32) -> SRgb8 {
+    pub fn into_srgb8(self, samples_per_pixel: u32) -> SRgb8 {
         let scale = (samples_per_pixel as f64).recip();
         let max = 255.0 / 256.0;
         let r = (self.r() * scale).clamp(0.0, max);
@@ -200,6 +200,7 @@ impl MulAssign<Vec3> for Vec3 {
     }
 }
 
+#[allow(clippy::suspicious_arithmetic_impl)]
 impl Div<f64> for Vec3 {
     type Output = Vec3;
     fn div(self, rhs: f64) -> Self::Output {
@@ -209,7 +210,7 @@ impl Div<f64> for Vec3 {
 
 impl DivAssign<f64> for Vec3 {
     fn div_assign(&mut self, rhs: f64) {
-        self.mul_assign(rhs.recip())
+        self.mul_assign(rhs.recip());
     }
 }
 
@@ -237,7 +238,7 @@ impl Index<usize> for Vec3 {
             0 => &self.0,
             1 => &self.1,
             2 => &self.2,
-            _ => panic!("invalid axis {} for Vec3", index),
+            _ => panic!("invalid axis {index} for Vec3"),
         }
     }
 }
@@ -248,7 +249,7 @@ impl IndexMut<usize> for Vec3 {
             0 => &mut self.0,
             1 => &mut self.1,
             2 => &mut self.2,
-            _ => panic!("invalid axis {} for Vec3", index),
+            _ => panic!("invalid axis {index} for Vec3"),
         }
     }
 }
@@ -275,12 +276,12 @@ impl IndexMut<Axis> for Vec3 {
     }
 }
 
-impl Into<Color> for &Rgb<u8> {
-    fn into(self) -> Color {
+impl From<&Rgb<u8>> for Color {
+    fn from(val: &Rgb<u8>) -> Self {
         let scale = 1.0 / 255.0;
-        let r = self.0[0] as f64 * scale;
-        let g = self.0[1] as f64 * scale;
-        let b = self.0[2] as f64 * scale;
+        let r = val.0[0] as f64 * scale;
+        let g = val.0[1] as f64 * scale;
+        let b = val.0[2] as f64 * scale;
         Vec3(r, g, b)
     }
 }

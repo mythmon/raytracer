@@ -8,7 +8,7 @@ pub enum Axis {
 }
 
 impl Axis {
-    pub fn next(&self) -> Self {
+    pub fn next(self) -> Self {
         match self {
             Axis::X => Axis::Y,
             Axis::Y => Axis::Z,

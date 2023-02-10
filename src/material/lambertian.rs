@@ -15,7 +15,7 @@ impl Material for Lambertian {
 
         // avoid degenerate scatter directions that can cause divide by zeros later
         if scatter_direction.is_near_zero() {
-            scatter_direction = hit_record.normal
+            scatter_direction = hit_record.normal;
         }
 
         ScatterResult {

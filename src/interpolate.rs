@@ -8,7 +8,7 @@ where
     (1.0 - t) * a + t * b
 }
 
-#[allow(dead_code)]
+#[allow(dead_code, clippy::needless_range_loop)]
 pub fn trilinear_interp(corners: [[[f64; 2]; 2]; 2], u: f64, v: f64, w: f64) -> f64 {
     let mut acc = 0.0;
     for i in 0..2 {

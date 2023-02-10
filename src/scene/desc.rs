@@ -15,7 +15,7 @@ pub(crate) struct SceneDesc {
     pub(crate) materials: HashMap<String, MaterialDesc>,
     pub(crate) objects: Vec<HittableDesc>,
     pub(crate) camera: CameraDesc,
-    pub(crate) image: config::ImageConfig,
+    pub(crate) image: config::Image,
     pub(crate) background: Option<(Value, Value, Value)>,
 }
 
@@ -100,7 +100,7 @@ pub(crate) enum MaterialDesc {
     DiffuseLight {
         color: TextureDesc,
     },
-    RandomChoice(Vec<Box<MaterialDesc>>),
+    RandomChoice(Vec<MaterialDesc>),
     RandomChoiceWeighted(Vec<(f64, Box<MaterialDesc>)>),
 }
 

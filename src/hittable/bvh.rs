@@ -85,13 +85,12 @@ impl Hittable for BvhNode {
             }
         }
 
-        let record = match &self.contents {
+        match &self.contents {
             BvhContents::Leaf(objects) => objects.hit(ray, t_range),
             BvhContents::Interior { left, right } => left
                 .hit(ray, t_range.clone())
                 .or_else(|| right.hit(ray, t_range)),
-        };
-        record
+        }
     }
 
     fn bounding_box(&self, time_range: Range<f64>) -> Option<Aabb> {

@@ -74,6 +74,7 @@ impl Perlin {
         accum.abs()
     }
 
+    #[allow(clippy::needless_range_loop)]
     fn interp(corners: [[[Vec3; 2]; 2]; 2], u: f64, v: f64, w: f64) -> f64 {
         let uu = u * u * (3.0 - 2.0 * u);
         let vv = v * v * (3.0 - 2.0 * v);

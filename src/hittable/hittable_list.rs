@@ -27,7 +27,7 @@ impl Hittable for HittableList {
         // Consider optimizing this if things are too slow though.
         self.objects
             .iter()
-            .flat_map(|h| h.hit(ray, t_range.clone()))
+            .filter_map(|h| h.hit(ray, t_range.clone()))
             .min_by_key(|hr| OrderedFloat(hr.t))
     }
 

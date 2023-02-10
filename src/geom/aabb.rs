@@ -46,7 +46,7 @@ impl Aabb {
                 return false;
             }
         }
-        return true;
+        true
     }
 
     pub fn span(&self) -> Vec3 {

@@ -36,7 +36,7 @@ impl AxisAlignedRect {
 
 impl Hittable for AxisAlignedRect {
     fn hit(&self, ray: &Ray, t_range: Range<f64>) -> Option<HitRecord> {
-        let bounds = Self::bounding_box(&self);
+        let bounds = Self::bounding_box(self);
         let span = bounds.span();
         let d0 = self.axis;
         let d1 = d0.next();
@@ -44,9 +44,7 @@ impl Hittable for AxisAlignedRect {
 
         let t = (self.center[d0] - ray.origin[d0]) / ray.direction[d0];
 
-        if !t_range.contains(&t) {
-            None
-        } else {
+        if t_range.contains(&t) {
             let i = ray.origin[d1] + t * ray.direction[d1];
             let j = ray.origin[d2] + t * ray.direction[d2];
             if !bounds.range(d1).contains(&i) || !bounds.range(d2).contains(&j) {
@@ -65,10 +63,12 @@ impl Hittable for AxisAlignedRect {
                     v,
                 ))
             }
+        } else {
+            None
         }
     }
 
     fn bounding_box(&self, _time_range: Range<f64>) -> Option<Aabb> {
-        Some(Self::bounding_box(&self))
+        Some(Self::bounding_box(self))
     }
 }

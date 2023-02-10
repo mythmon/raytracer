@@ -1,3 +1,14 @@
+#![deny(clippy::all)]
+#![warn(clippy::pedantic)]
+#![allow(
+    clippy::many_single_char_names,
+    clippy::module_name_repetitions,
+    clippy::cast_precision_loss,
+    clippy::cast_possible_truncation,
+    clippy::cast_sign_loss,
+    clippy::cast_lossless,
+)]
+
 mod camera;
 mod config;
 mod geom;
@@ -52,15 +63,6 @@ fn main() -> Result<()> {
     let start = time::Instant::now();
 
     let mut raster = pix::Raster::<SRgb8>::with_clear(image.width, image.height);
-    struct LocatedPixel<'a> {
-        x: usize,
-        y: usize,
-        pixel: &'a mut SRgb8,
-    }
-    struct ParallelWorkItem<'a> {
-        pixels: &'a mut [LocatedPixel<'a>],
-        world: BvhNode,
-    }
 
     let mut pixels = raster
         .pixels_mut()
@@ -77,32 +79,11 @@ fn main() -> Result<()> {
         world,
     };
 
-    fn split_pixels<'a>(
-        work: ParallelWorkItem<'a>,
-    ) -> (ParallelWorkItem<'a>, Option<ParallelWorkItem<'a>>) {
-        let h = work.pixels.len() / 2;
-        if h > 0 {
-            let (left, right) = work.pixels.split_at_mut(h);
-            (
-                ParallelWorkItem {
-                    pixels: left,
-                    world: work.world.clone(),
-                },
-                Some(ParallelWorkItem {
-                    pixels: right,
-                    world: work.world,
-                }),
-            )
-        } else {
-            (work, None)
-        }
-    }
-
     rayon::iter::split(work, split_pixels)
         .progress_with(bar.clone())
         .for_each(|ParallelWorkItem { world, pixels }| {
             let mut rng = rand::thread_rng();
-            for LocatedPixel { x, y, pixel } in pixels.into_iter() {
+            for LocatedPixel { x, y, pixel } in pixels {
                 let color: Color = distributions::Standard
                     .sample_iter(&mut rng)
                     .take(image.samples_per_pixel as usize)
@@ -170,7 +151,7 @@ fn human_duration(d: Duration) -> String {
         parts.push(format!("{}h", millis / HOUR));
         millis %= HOUR;
     }
-    if millis > MINUTE || parts.len() > 0 {
+    if millis > MINUTE || !parts.is_empty() {
         parts.push(format!("{}m", millis / MINUTE));
         millis %= MINUTE;
     }
@@ -181,4 +162,34 @@ fn human_duration(d: Duration) -> String {
     }
     parts.push("s".to_string());
     parts.join("")
+}
+
+struct LocatedPixel<'a> {
+    x: usize,
+    y: usize,
+    pixel: &'a mut SRgb8,
+}
+
+struct ParallelWorkItem<'a> {
+    pixels: &'a mut [LocatedPixel<'a>],
+    world: BvhNode,
+}
+
+fn split_pixels(work: ParallelWorkItem) -> (ParallelWorkItem, Option<ParallelWorkItem>) {
+    let h = work.pixels.len() / 2;
+    if h > 0 {
+        let (left, right) = work.pixels.split_at_mut(h);
+        (
+            ParallelWorkItem {
+                pixels: left,
+                world: work.world.clone(),
+            },
+            Some(ParallelWorkItem {
+                pixels: right,
+                world: work.world,
+            }),
+        )
+    } else {
+        (work, None)
+    }
 }
