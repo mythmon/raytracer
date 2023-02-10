@@ -1,10 +1,10 @@
-use std::{path::Path, io::BufReader, fs::File};
 use anyhow::Result;
 use image::RgbImage;
+use std::{fs::File, io::BufReader, path::Path};
 
 use super::Texture;
 pub struct Image {
-    image: RgbImage
+    image: RgbImage,
 }
 
 impl Image {
@@ -13,7 +13,9 @@ impl Image {
         let f = BufReader::new(f);
         let f = image::io::Reader::new(f).with_guessed_format()?;
         let image = f.decode()?;
-        Ok(Self { image: image.into_rgb8() })
+        Ok(Self {
+            image: image.into_rgb8(),
+        })
     }
 }
 

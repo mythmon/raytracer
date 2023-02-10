@@ -3,13 +3,15 @@ mod config;
 mod geom;
 mod hittable;
 mod interpolate;
-mod loader;
 mod material;
+mod scene;
 mod texture;
 
 use crate::{
+    config::Scene,
     geom::{Color, Ray},
-    hittable::BvhNode, loader::SceneLoader, config::Scene,
+    hittable::BvhNode,
+    scene::SceneLoader,
 };
 use anyhow::{Context, Result};
 use clap::Parser;
@@ -109,7 +111,7 @@ fn main() -> Result<()> {
                         let v = ((image.height as usize - *y) as f64 + jy)
                             / (image.height as f64 - 1.0);
                         let ray = camera.get_ray(u, v);
-                        ray_color(ray,  background, &world, image.max_depth)
+                        ray_color(ray, background, &world, image.max_depth)
                     })
                     .sum();
                 **pixel = color.into_srgb8(image.samples_per_pixel);
@@ -142,7 +144,9 @@ fn ray_color<H: Hittable>(ray: Ray, background: Color, hittable: &H, depth_budge
             let material = hit_record.material.clone();
             material.scatter(&ray, &hit_record)
         };
-        let emitted = hit_record.material.emitted(hit_record.u, hit_record.v, hit_record.p);
+        let emitted = hit_record
+            .material
+            .emitted(hit_record.u, hit_record.v, hit_record.p);
         if let Some(scattered) = scatter_record.scattered_ray {
             let bounce_color = ray_color(scattered, background, hittable, depth_budget - 1);
             emitted + scatter_record.attenuation * bounce_color

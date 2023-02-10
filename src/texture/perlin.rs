@@ -1,5 +1,8 @@
+use crate::{
+    geom::{Color, Point3, Vec3},
+    texture::Texture,
+};
 use rand::{seq::SliceRandom, thread_rng, Rng};
-use crate::{texture::Texture, geom::{Color, Point3, Vec3}};
 
 pub struct Perlin {
     rand_vec: Vec<Vec3>,
@@ -10,7 +13,7 @@ pub struct Perlin {
 }
 
 impl Perlin {
-    fn new (scale: f64) -> Self {
+    fn new(scale: f64) -> Self {
         let point_count = 256;
         let mut rng = thread_rng();
 
@@ -21,7 +24,7 @@ impl Perlin {
             perm_x: Self::generate_perm(&mut rng, point_count),
             perm_y: Self::generate_perm(&mut rng, point_count),
             perm_z: Self::generate_perm(&mut rng, point_count),
-            scale
+            scale,
         }
     }
 
@@ -36,9 +39,9 @@ impl Perlin {
         let v = p.y() - p.y().floor();
         let w = p.z() - p.z().floor();
         // hermitian smoothing
-        let u = u * u * (3.0-2.0*u);
-        let v = v * v * (3.0-2.0*v);
-        let w = w * w * (3.0-2.0*w);
+        let u = u * u * (3.0 - 2.0 * u);
+        let v = v * v * (3.0 - 2.0 * v);
+        let w = w * w * (3.0 - 2.0 * w);
 
         let i = p.x().floor() as isize;
         let j = p.y().floor() as isize;
@@ -48,11 +51,10 @@ impl Perlin {
         for di in 0..2_isize {
             for dj in 0..2_isize {
                 for dk in 0..2_isize {
-                    corners[di as usize][dj as usize][dk as usize] = self.rand_vec[
-                        self.perm_x[((i + di) & 0xFF) as usize] ^
-                        self.perm_y[((j + dj) & 0xFF) as usize] ^
-                        self.perm_z[((k + dk) & 0xFF) as usize]
-                    ];
+                    corners[di as usize][dj as usize][dk as usize] = self.rand_vec[self.perm_x
+                        [((i + di) & 0xFF) as usize]
+                        ^ self.perm_y[((j + dj) & 0xFF) as usize]
+                        ^ self.perm_z[((k + dk) & 0xFF) as usize]];
                 }
             }
         }
@@ -106,6 +108,7 @@ impl Texture for Perlin {
     fn value(&self, _u: f64, _v: f64, p: Point3) -> Color {
         // Color::white() * 0.5 * (1.0 + self.noise(self.scale * p)) // straight noise
         // Color::white() * self.turb(self.scale * p, 7) // turbulent noise
-        Color::white() * 0.5 * (1.0 + (self.scale * p.z() + 10.0 * self.turb(p, 7)).sin()) // marble
+        Color::white() * 0.5 * (1.0 + (self.scale * p.z() + 10.0 * self.turb(p, 7)).sin())
+        // marble
     }
 }

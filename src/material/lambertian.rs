@@ -1,7 +1,8 @@
 use crate::{
     geom::{Ray, Vec3},
     hittable::HitRecord,
-    material::{Material, ScatterResult}, texture::Texture,
+    material::{Material, ScatterResult},
+    texture::Texture,
 };
 
 pub struct Lambertian {

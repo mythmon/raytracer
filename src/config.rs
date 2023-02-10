@@ -1,4 +1,4 @@
-use crate::{camera::Camera, hittable::Hittable, geom::Color};
+use crate::{camera::Camera, geom::Color, hittable::Hittable};
 use serde::{Deserialize, Serialize};
 
 pub struct Scene<H: Hittable> {

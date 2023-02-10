@@ -17,10 +17,10 @@ pub fn trilinear_interp(corners: [[[f64; 2]; 2]; 2], u: f64, v: f64, w: f64) -> 
                 let fi = i as f64;
                 let fj = j as f64;
                 let fk = k as f64;
-                acc += (fi * u + (1.0-fi)*(1.0-u)) *
-                       (fj * v + (1.0-fj)*(1.0-v)) * 
-                       (fk * w + (1.0-fk)*(1.0-w)) * 
-                       corners[i][j][k];
+                acc += (fi * u + (1.0 - fi) * (1.0 - u))
+                    * (fj * v + (1.0 - fj) * (1.0 - v))
+                    * (fk * w + (1.0 - fk) * (1.0 - w))
+                    * corners[i][j][k];
             }
         }
     }

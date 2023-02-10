@@ -1,6 +1,6 @@
-use ordered_float::OrderedFloat;
-use crate::geom::{Point3, Ray};
 use crate::geom::Axis;
+use crate::geom::{Point3, Ray};
+use ordered_float::OrderedFloat;
 use std::ops::{Range, RangeInclusive};
 
 use super::Vec3;
@@ -22,14 +22,14 @@ impl Aabb {
 
     pub fn surrounding(parts: &[&Self]) -> Option<Self> {
         let mut min = Point3::new(f64::INFINITY, f64::INFINITY, f64::INFINITY);
-        let mut max =  Point3::new(-f64::INFINITY, -f64::INFINITY, -f64::INFINITY);
+        let mut max = Point3::new(-f64::INFINITY, -f64::INFINITY, -f64::INFINITY);
 
         for axis in [Axis::X, Axis::Y, Axis::Z] {
             min[axis] = parts.iter().map(|b| OrderedFloat(b.min[axis])).min()?.0;
             max[axis] = parts.iter().map(|b| OrderedFloat(b.max[axis])).max()?.0;
         }
 
-        Some(Self {min, max})
+        Some(Self { min, max })
     }
 
     pub fn intersect(&self, ray: &Ray, t_range: Range<f64>) -> bool {
@@ -42,7 +42,9 @@ impl Aabb {
             }
             let t_min = t0.max(t_range.start);
             let t_max = t1.min(t_range.end);
-            if t_max <= t_min { return false }
+            if t_max <= t_min {
+                return false;
+            }
         }
         return true;
     }
@@ -74,13 +76,19 @@ impl Aabb {
 
 #[cfg(test)]
 mod tests {
-    use crate::geom::{Point3, Aabb};
+    use crate::geom::{Aabb, Point3};
 
     #[test]
     fn test_surrounding() {
         let a = Aabb::new(Point3::new(1.0, 2.0, 3.0), Point3::new(4.0, 5.0, 6.0));
         let b = Aabb::new(Point3::new(7.0, 8.0, 9.0), Point3::new(10.0, 11.0, 12.0));
         let c = Aabb::surrounding(&[&a, &b]);
-        assert_eq!(c, Some(Aabb::new(Point3::new(1.0, 2.0, 3.0), Point3::new(10.0, 11.0, 12.0))));
+        assert_eq!(
+            c,
+            Some(Aabb::new(
+                Point3::new(1.0, 2.0, 3.0),
+                Point3::new(10.0, 11.0, 12.0)
+            ))
+        );
     }
 }

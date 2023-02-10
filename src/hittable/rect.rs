@@ -47,7 +47,6 @@ impl Hittable for AxisAlignedRect {
         if !t_range.contains(&t) {
             None
         } else {
-
             let i = ray.origin[d1] + t * ray.direction[d1];
             let j = ray.origin[d2] + t * ray.direction[d2];
             if !bounds.range(d1).contains(&i) || !bounds.range(d2).contains(&j) {

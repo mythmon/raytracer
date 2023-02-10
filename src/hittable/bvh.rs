@@ -52,10 +52,12 @@ impl BvhNode {
                 })
             });
 
-            let right =
-                BvhNode::new_along_axis(time_range.clone(), hittables.split_off(hittables.len() / 2), split_axis.next());
-            let left =
-                BvhNode::new_along_axis(time_range.clone(), hittables, split_axis.next());
+            let right = BvhNode::new_along_axis(
+                time_range.clone(),
+                hittables.split_off(hittables.len() / 2),
+                split_axis.next(),
+            );
+            let left = BvhNode::new_along_axis(time_range.clone(), hittables, split_axis.next());
             let bounding_box =
                 if let (Some(lbb), Some(rbb)) = (&left.bounding_box, &right.bounding_box) {
                     Aabb::surrounding(&[lbb, rbb])

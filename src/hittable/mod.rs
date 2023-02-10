@@ -1,14 +1,14 @@
 mod bvh;
 mod hittable_list;
 mod moving_sphere;
-mod sphere;
 mod rect;
+mod sphere;
 
 pub use bvh::BvhNode;
 pub use hittable_list::HittableList;
 pub use moving_sphere::MovingSphere;
-pub use sphere::Sphere;
 pub use rect::AxisAlignedRect;
+pub use sphere::Sphere;
 
 use crate::{
     geom::{Aabb, Point3, Ray, Vec3},

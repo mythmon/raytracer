@@ -1,5 +1,5 @@
 use crate::{
-    geom::{Point3, Ray, Aabb, Vec3},
+    geom::{Aabb, Point3, Ray, Vec3},
     hittable::{HitRecord, Hittable},
     material::Material,
 };

@@ -3,7 +3,7 @@ use crate::texture::Texture;
 
 pub struct Checkerboard {
     even: Box<dyn Texture>,
-    odd: Box<dyn Texture>
+    odd: Box<dyn Texture>,
 }
 
 impl Checkerboard {
