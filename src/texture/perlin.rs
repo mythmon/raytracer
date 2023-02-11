@@ -4,6 +4,7 @@ use crate::{
 };
 use rand::{seq::SliceRandom, thread_rng, Rng};
 
+#[derive(Clone)]
 pub struct Perlin {
     rand_vec: Vec<Vec3>,
     perm_x: Vec<usize>,

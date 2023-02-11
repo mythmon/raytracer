@@ -1,0 +1,61 @@
+Scene(
+    image: (
+        width: 640,
+        height: 360,
+        samples_per_pixel: 200,
+        max_depth: 50 
+    ),
+
+    camera: (
+        look_from: (-7, 1.5, 4),
+        look_at: (0, 0.2, -1),
+        v_up: (0, 1, 0),
+        vertical_fov: 18,
+        aperture: 0.1,
+        focus_distance: 10
+    ),
+
+    background: (0.7, 0.8, 1.0),
+
+    materials: {
+        "ground": Lambertian(albedo: Solid(0.4, 0.4, 0.8)),
+        "white": Lambertian(albedo: Solid(1, 1, 1)),
+        "black": Lambertian(albedo: Solid(0, 0, 0)),
+        "grey": Lambertian(albedo: Solid(0.5, 0.5, 0.5)),
+    },
+
+    objects: [
+        Sphere(
+            center: (0, -1000.5, -1),
+            radius: 1000,
+            material: Shared("ground"),
+        ),
+        ConstantMedium(
+            boundary: Sphere(
+                center: (1.1, 0, -1),
+                radius: 0.5,
+                material: Shared("white"),
+            ),
+            density: 0.6,
+            texture: Solid(1.0, 1.0, 1.0),
+        ),
+        ConstantMedium(
+            boundary: Sphere(
+                center: (0, 0, -1),
+                radius: 0.5,
+                material: Shared("white"),
+            ),
+            density: 0.6,
+            texture: Solid(0.5, 0.5, 0.5),
+        ),
+        ConstantMedium(
+            boundary: Sphere(
+                center: (-1.1, 0, -1),
+                radius: 0.5,
+                material: Shared("white"),
+            ),
+            density: 0.6,
+            texture: Solid(0.0, 0.0, 0.0),
+        ),
+    ]
+)

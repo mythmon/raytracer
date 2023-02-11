@@ -1,6 +1,7 @@
 use crate::geom::Axis;
 use crate::texture::Texture;
 
+#[derive(Clone)]
 pub struct Checkerboard {
     even: Box<dyn Texture>,
     odd: Box<dyn Texture>,

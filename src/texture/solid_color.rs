@@ -2,6 +2,7 @@ use crate::geom::{Color, Point3};
 
 use super::Texture;
 
+#[derive(Clone)]
 pub struct SolidColor(pub Color);
 
 impl Texture for SolidColor {

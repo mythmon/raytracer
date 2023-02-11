@@ -5,6 +5,7 @@ mod rect;
 mod sphere;
 mod cuboid;
 mod instance;
+mod constant_medium;
 
 pub use bvh::BvhNode;
 pub use hittable_list::HittableList;
@@ -13,6 +14,7 @@ pub use rect::AxisAlignedRect;
 pub use sphere::Sphere;
 pub use cuboid::Cuboid;
 pub use instance::{Translate, RotateY};
+pub use constant_medium::ConstantMedium;
 
 use crate::{
     geom::{Aabb, Point3, Ray, Vec3},

@@ -2,7 +2,7 @@ Scene(
     image: (
         width: 640,
         height: 360,
-        samples_per_pixel: 100,
+        samples_per_pixel: 200,
         max_depth: 50 
     ),
 
@@ -18,16 +18,16 @@ Scene(
     background: (0.7, 0.8, 1.0),
 
     materials: {
-        "ground": Lambertian(albedo: (0.8, 0.8, 0.0)),
-        "center": Lambertian(albedo: (0.2, 0.3, 0.8)),
+        "ground": Lambertian(albedo: Solid(0.8, 0.8, 0.0)),
+        "center": Lambertian(albedo: Solid(0.2, 0.3, 0.8)),
         "left": Dielectric(index_of_refraction: 1.5),
-        "right": Metal(albedo: (0.8, 0.8, 0.7), fuzziness: 0.1)
+        "right": Metal(albedo: (0.8, 0.8, 0.7), fuzziness: 0.05)
     },
 
     objects: [
         Sphere(
-            center: (0, -100.5, -1),
-            radius: 100,
+            center: (0, -1000.5, -1),
+            radius: 1000,
             material: Shared("ground"),
         ),
         Sphere(

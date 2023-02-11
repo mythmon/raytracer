@@ -2,7 +2,7 @@ use crate::{
     camera::Camera,
     config::Scene,
     geom::{Color, Vec3},
-    hittable::{self, AxisAlignedRect, BvhNode, Cuboid, Hittable, RotateY, Translate},
+    hittable::{self, AxisAlignedRect, BvhNode, Cuboid, Hittable, RotateY, Translate, ConstantMedium},
     material,
     scene::desc,
     texture::{self, Texture},
@@ -171,10 +171,24 @@ impl SceneLoader {
                         .map(|h| Box::new(RotateY::new(h, theta)) as Box<dyn Hittable>),
                 );
             }
+
+            desc::Hittable::ConstantMedium { boundary, density, texture: color } => {
+                let mut inner = HittableAccum::default();
+                let texture = self.realize_texture(color)?;
+                let density = density.eval(self)?;
+                self.realize_hittable(*boundary, &mut inner)?;
+                hittables.add_many(
+                    inner
+                        .0
+                        .into_iter()
+                        .map(|h| Box::new(ConstantMedium::new(h, density, texture.clone())) as Box<dyn Hittable>),
+                );
+            }
         };
         Ok(())
     }
 
+    #[allow(clippy::too_many_lines)]
     fn realize_pattern(
         &mut self,
         var: &str,
@@ -275,6 +289,19 @@ impl SceneLoader {
                             .0
                             .into_iter()
                             .map(|h| Box::new(RotateY::new(h, theta)) as Box<dyn Hittable>),
+                    );
+                }
+
+                desc::Hittable::ConstantMedium { boundary, density, texture: color } => {
+                    let mut inner = HittableAccum::default();
+                    let texture = self.realize_texture((*color).clone())?;
+                    let density = density.eval(self)?;
+                    self.realize_hittable((**boundary).clone(), &mut inner)?;
+                    hittables.add_many(
+                        inner
+                            .0
+                            .into_iter()
+                            .map(|h| Box::new(ConstantMedium::new(h, density, texture.clone())) as Box<dyn Hittable>),
                     );
                 }
             }

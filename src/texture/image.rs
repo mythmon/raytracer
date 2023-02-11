@@ -1,8 +1,9 @@
 use anyhow::Result;
 use image::RgbImage;
 use std::{fs::File, io::BufReader, path::Path};
-
 use super::Texture;
+
+#[derive(Clone)]
 pub struct Image {
     image: RgbImage,
 }

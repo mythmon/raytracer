@@ -78,6 +78,11 @@ pub(crate) enum Hittable {
         angle: Value,
         hittable: Box<Hittable>
     },
+    ConstantMedium {
+        boundary: Box<Hittable>,
+        density: Value,
+        texture: TextureDesc,
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
