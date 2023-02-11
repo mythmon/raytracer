@@ -1,7 +1,7 @@
 use std::{ops::Range, sync::Arc};
 
 use crate::{
-    geom::{Aabb, Point3, Vec3},
+    geom::{Aabb, Point3, Ray, Vec3},
     interpolate::lerp,
     material::Material,
 };
@@ -24,11 +24,7 @@ impl MovingSphere {
 }
 
 impl Hittable for MovingSphere {
-    fn hit(
-        &self,
-        ray: &crate::geom::Ray,
-        t_range: std::ops::Range<f64>,
-    ) -> Option<super::HitRecord> {
+    fn hit(&self, ray: Ray, t_range: std::ops::Range<f64>) -> Option<super::HitRecord> {
         let center = self.center_at(ray.time);
         let fixed = Sphere {
             center,

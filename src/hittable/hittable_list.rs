@@ -1,6 +1,6 @@
 use std::ops::Range;
 
-use crate::{geom::Aabb, hittable::Hittable};
+use crate::{geom::{Aabb, Ray}, hittable::Hittable};
 use ordered_float::OrderedFloat;
 
 #[derive(Clone, Default)]
@@ -20,7 +20,7 @@ impl HittableList {
 }
 
 impl Hittable for HittableList {
-    fn hit(&self, ray: &crate::geom::Ray, t_range: Range<f64>) -> Option<super::HitRecord> {
+    fn hit(&self, ray: Ray, t_range: Range<f64>) -> Option<super::HitRecord> {
         // the book does this by maintaining a single hittable record which is
         // passed by reference into `hit()`, which can update it and return if a
         // hit was found. That's arguably more efficient. This is way simpler.
@@ -39,5 +39,16 @@ impl Hittable for HittableList {
             .map(|o| o.bounding_box(time_range.clone()))
             .collect();
         bounding_boxes.and_then(|bbs| Aabb::surrounding(&(bbs.iter().collect::<Vec<_>>())))
+    }
+}
+
+impl<H> FromIterator<H> for HittableList
+where
+    H: Hittable + 'static,
+{
+    fn from_iter<T: IntoIterator<Item = H>>(iter: T) -> Self {
+        Self {
+            objects: iter.into_iter().map(|h| Box::new(h) as Box<dyn Hittable>).collect()
+        }
     }
 }

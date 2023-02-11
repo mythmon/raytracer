@@ -27,6 +27,11 @@ impl Vec3 {
         Self(0.0, 0.0, 0.0)
     }
 
+    pub fn infinity() -> Self {
+        let inf = f64::INFINITY;
+        Self(inf, inf, inf)
+    }
+
     pub fn rand_unit_vector() -> Self {
         let between = Uniform::new_inclusive(-1.0, 1.0);
         let mut rng = rand::thread_rng();
@@ -125,6 +130,11 @@ impl Vec3 {
         let ig = (g * 256.0) as u8;
         let ib = (b * 256.0) as u8;
         SRgb8::new(ir, ig, ib)
+    }
+
+    pub fn project(self, rhs: Self) -> Self {
+        let rhs_unit = rhs.unit_vector();
+        rhs_unit * self.dot(rhs_unit)
     }
 }
 
@@ -283,5 +293,17 @@ impl From<&Rgb<u8>> for Color {
         let g = val.0[1] as f64 * scale;
         let b = val.0[2] as f64 * scale;
         Vec3(r, g, b)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::geom::Vec3;
+
+    #[test]
+    fn test_project() {
+        assert_eq!(Vec3(1., 2., 3.).project(Vec3(2., 0., 0.)), Vec3(1., 0., 0.));
+        assert_eq!(Vec3(1., 2., 3.).project(Vec3(0., 2., 0.)), Vec3(0., 2., 0.));
+        assert_eq!(Vec3(1., 2., 3.).project(Vec3(0., 0., 2.)), Vec3(0., 0., 3.));
     }
 }

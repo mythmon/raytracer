@@ -32,7 +32,7 @@ impl Aabb {
         Some(Self { min, max })
     }
 
-    pub fn intersect(&self, ray: &Ray, t_range: Range<f64>) -> bool {
+    pub fn intersect(&self, ray: Ray, t_range: Range<f64>) -> bool {
         for a in 0..3 {
             let inv_dir = ray.direction[a].recip();
             let mut t0 = (self.min[a] - ray.origin[a]) * inv_dir;
@@ -71,6 +71,16 @@ impl Aabb {
 
     pub fn z_range(&self) -> RangeInclusive<f64> {
         self.min.z()..=self.max.z()
+    }
+
+    pub fn corners(&self) -> Vec<Point3> {
+        itertools::iproduct!(
+            [self.min.x(), self.max.x()],
+            [self.min.y(), self.max.y()],
+            [self.min.z(), self.max.z()]
+        )
+        .map(|(x, y, z)| Vec3::new(x, y, z))
+        .collect()
     }
 }
 

@@ -1,9 +1,9 @@
 Scene(
     image: (
-        width: 600,
-        height: 600,
-        samples_per_pixel: 400,
-        max_depth: 50 
+        width: 500,
+        height: 500,
+        samples_per_pixel: 50_000,
+        max_depth: 500 
     ),
 
     camera: (
@@ -13,7 +13,7 @@ Scene(
         aperture: 0,
     ),
 
-    background: (0.0, 0.0, 0.0),
+    background: (1.0, 1.0, 1.0),
 
     materials: {
         "red": Lambertian(albedo: Solid(0.65, 0.05, 0.05)),
@@ -65,15 +65,25 @@ Scene(
             height: 555,
             material: Shared("white"),
         ),
-        Cuboid (
-            center: (212.5, 82.5, 82.5),
-            size: (165, 165, 165)
-            material: Shared("white"),
+        Translate (
+            offset: (384.5, 165, 212.5),
+            hittable: RotateY(
+                angle: 15,
+                hittable: Cuboid (
+                    size: (165, 330, 165),
+                    material: Shared("white"),
+                )
+            )
         ),
-        Cuboid (
-            center: (247.5, 165, 377.5),
-            size: (165, 330, 165)
-            material: Shared("white"),
+        Translate (
+            offset: (212.5, 82.5, 147.5),
+            hittable: RotateY(
+                angle: -18,
+                hittable: Cuboid (
+                    size: (165, 165, 165),
+                    material: Shared("white"),
+                )
+            )
         ),
     ]
 )

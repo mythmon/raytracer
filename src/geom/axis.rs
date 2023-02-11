@@ -15,6 +15,14 @@ impl Axis {
             Axis::Z => Axis::X,
         }
     }
+
+    pub fn prev(self) -> Self {
+        match self {
+            Axis::X => Axis::Z,
+            Axis::Y => Axis::X,
+            Axis::Z => Axis::Y,
+        }
+    }
 }
 
 impl From<Axis> for Vec3 {

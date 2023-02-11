@@ -120,7 +120,7 @@ fn main() -> Result<()> {
 fn ray_color<H: Hittable>(ray: Ray, background: Color, hittable: &H, depth_budget: u32) -> Color {
     if depth_budget == 0 {
         Color::default()
-    } else if let Some(hit_record) = hittable.hit(&ray, 0.001..f64::INFINITY) {
+    } else if let Some(hit_record) = hittable.hit(ray, 0.001..f64::INFINITY) {
         let scatter_record = {
             let material = hit_record.material.clone();
             material.scatter(&ray, &hit_record)

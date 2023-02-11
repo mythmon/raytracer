@@ -25,7 +25,7 @@ impl Sphere {
 }
 
 impl Hittable for Sphere {
-    fn hit(&self, ray: &Ray, t_range: Range<f64>) -> Option<HitRecord> {
+    fn hit(&self, ray: Ray, t_range: Range<f64>) -> Option<HitRecord> {
         // this is based off solving the equation for a sphere set equal to the
         // equation of a line, which boils down to a quadratic equation.
 

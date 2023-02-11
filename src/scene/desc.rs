@@ -1,6 +1,6 @@
 use crate::{
     config,
-    geom::{Axis, Point3, Vec3},
+    geom::{Point3, Vec3},
     scene::SceneLoader,
 };
 use anyhow::{anyhow, Result};
@@ -12,9 +12,9 @@ use std::path::PathBuf;
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename = "Scene")]
 pub(crate) struct SceneDesc {
-    pub(crate) materials: HashMap<String, MaterialDesc>,
-    pub(crate) objects: Vec<HittableDesc>,
-    pub(crate) camera: CameraDesc,
+    pub(crate) materials: HashMap<String, Material>,
+    pub(crate) objects: Vec<Hittable>,
+    pub(crate) camera: Camera,
     pub(crate) image: config::Image,
     pub(crate) background: Option<(Value, Value, Value)>,
 }
@@ -39,31 +39,44 @@ impl From<Vec3> for (Value, Value, Value) {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename = "Object")]
-pub(crate) enum HittableDesc {
+pub(crate) enum Hittable {
     Sphere {
         center: (Value, Value, Value),
         radius: Value,
-        material: MaterialDesc,
+        material: Material,
     },
     MovingSphere {
         center: ((Value, Value, Value), (Value, Value, Value)),
         time: (Value, Value),
         radius: Value,
-        material: MaterialDesc,
-    },
-    Pattern {
-        var: String,
-        range: Vec<i32>,
-        object: Box<HittableDesc>,
+        material: Material,
     },
     AARect {
         center: (Value, Value, Value),
         width: Value,
         height: Value,
-        axis: AxisDesc,
-        material: MaterialDesc,
+        axis: Axis,
+        material: Material,
+    },
+    Cuboid {
+        center: Option<(Value, Value, Value)>,
+        size: (Value, Value, Value),
+        material: Material,
+    },
+    Pattern {
+        var: String,
+        range: Vec<i32>,
+        object: Box<Hittable>,
+    },
+    Translate {
+        offset: (Value, Value, Value),
+        hittable: Box<Hittable>,
+    },
+    RotateY {
+        angle: Value,
+        hittable: Box<Hittable>
     },
 }
 
@@ -85,7 +98,7 @@ pub(crate) enum BinOp {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename = "Material")]
-pub(crate) enum MaterialDesc {
+pub(crate) enum Material {
     Shared(String),
     Lambertian {
         albedo: TextureDesc,
@@ -100,8 +113,8 @@ pub(crate) enum MaterialDesc {
     DiffuseLight {
         color: TextureDesc,
     },
-    RandomChoice(Vec<MaterialDesc>),
-    RandomChoiceWeighted(Vec<(f64, Box<MaterialDesc>)>),
+    RandomChoice(Vec<Material>),
+    RandomChoiceWeighted(Vec<(f64, Box<Material>)>),
 }
 
 impl Value {
@@ -131,7 +144,7 @@ impl Value {
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename = "Camera")]
-pub(crate) struct CameraDesc {
+pub(crate) struct Camera {
     pub(crate) look_from: Point3,
     pub(crate) look_at: Option<Point3>,
     pub(crate) v_up: Option<Vec3>,
@@ -143,18 +156,18 @@ pub(crate) struct CameraDesc {
 
 #[derive(Serialize, Deserialize, Debug, Copy, Clone)]
 #[serde(rename = "Axis")]
-pub(crate) enum AxisDesc {
+pub(crate) enum Axis {
     X,
     Y,
     Z,
 }
 
-impl From<AxisDesc> for Axis {
-    fn from(value: AxisDesc) -> Self {
+impl From<Axis> for crate::geom::Axis {
+    fn from(value: Axis) -> Self {
         match value {
-            AxisDesc::X => Axis::X,
-            AxisDesc::Y => Axis::Y,
-            AxisDesc::Z => Axis::Z,
+            Axis::X => crate::geom::Axis::X,
+            Axis::Y => crate::geom::Axis::Y,
+            Axis::Z => crate::geom::Axis::Z,
         }
     }
 }

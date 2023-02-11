@@ -35,7 +35,7 @@ impl AxisAlignedRect {
 }
 
 impl Hittable for AxisAlignedRect {
-    fn hit(&self, ray: &Ray, t_range: Range<f64>) -> Option<HitRecord> {
+    fn hit(&self, ray: Ray, t_range: Range<f64>) -> Option<HitRecord> {
         let bounds = Self::bounding_box(self);
         let span = bounds.span();
         let d0 = self.axis;

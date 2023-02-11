@@ -78,7 +78,7 @@ impl BvhNode {
 }
 
 impl Hittable for BvhNode {
-    fn hit(&self, ray: &Ray, t_range: Range<f64>) -> Option<HitRecord> {
+    fn hit(&self, ray: Ray, t_range: Range<f64>) -> Option<HitRecord> {
         if let Some(bounding_box) = &self.bounding_box {
             if !bounding_box.intersect(ray, t_range.clone()) {
                 return None;

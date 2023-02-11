@@ -2,7 +2,7 @@ use crate::{
     camera::Camera,
     config::Scene,
     geom::{Color, Vec3},
-    hittable::{self, AxisAlignedRect, BvhNode, Hittable},
+    hittable::{self, AxisAlignedRect, BvhNode, Cuboid, Hittable, RotateY, Translate},
     material,
     scene::desc,
     texture::{self, Texture},
@@ -15,6 +15,19 @@ use std::{
     path::{Path, PathBuf},
     sync::Arc,
 };
+
+#[derive(Default)]
+struct HittableAccum(Vec<Box<dyn Hittable>>);
+
+impl HittableAccum {
+    fn add<H: Hittable + 'static>(&mut self, h: H) {
+        self.0.push(Box::new(h));
+    }
+
+    fn add_many<I: Iterator<Item = Box<dyn Hittable>>>(&mut self, iter: I) {
+        self.0.extend(iter);
+    }
+}
 
 pub struct SceneLoader {
     pub(crate) scene_path: PathBuf,
@@ -43,46 +56,9 @@ impl SceneLoader {
             self.materials.insert(key, material);
         }
 
-        let mut hittables: Vec<Box<dyn Hittable>> = vec![];
+        let mut hittables = HittableAccum::default();
         for desc in scene_desc.objects {
-            match desc {
-                desc::HittableDesc::Sphere {
-                    material,
-                    center,
-                    radius,
-                } => hittables.push(Box::new(hittable::Sphere {
-                    center: self.eval_vec3(center)?,
-                    radius: radius.eval(&self)?,
-                    material: self.realize_material(material)?,
-                })),
-                desc::HittableDesc::MovingSphere {
-                    center,
-                    time,
-                    radius,
-                    material,
-                } => hittables.push(Box::new(hittable::MovingSphere {
-                    center: (self.eval_vec3(center.0)?)..(self.eval_vec3(center.1)?),
-                    time: (time.0.eval(&self)?)..(time.1.eval(&self)?),
-                    radius: radius.eval(&self)?,
-                    material: self.realize_material(material)?,
-                })),
-                desc::HittableDesc::AARect {
-                    center,
-                    width,
-                    height,
-                    axis,
-                    material,
-                } => hittables.push(Box::new(AxisAlignedRect {
-                    center: self.eval_vec3(center)?,
-                    width: width.eval(&self)?,
-                    height: height.eval(&self)?,
-                    axis: axis.into(),
-                    material: self.realize_material(material)?,
-                })),
-                desc::HittableDesc::Pattern { var, range, object } => {
-                    self.realize_pattern(&mut hittables, &var, &range[..], &object)?;
-                }
-            };
+            self.realize_hittable(desc, &mut hittables)?;
         }
 
         let mut camera_builder = Camera::build()
@@ -107,7 +83,7 @@ impl SceneLoader {
         let camera = camera_builder.done()?;
 
         Ok(Scene {
-            world: BvhNode::new(camera.shutter_time.clone(), hittables),
+            world: BvhNode::new(camera.shutter_time.clone(), hittables.0),
             camera,
             image: scene_desc.image,
             background: scene_desc
@@ -116,12 +92,95 @@ impl SceneLoader {
         })
     }
 
-    pub(crate) fn realize_pattern(
+    fn realize_hittable(
         &mut self,
-        hittables: &mut Vec<Box<dyn Hittable>>,
+        hittable: desc::Hittable,
+        hittables: &mut HittableAccum,
+    ) -> Result<()> {
+        match hittable {
+            desc::Hittable::Sphere {
+                material,
+                center,
+                radius,
+            } => hittables.add(hittable::Sphere {
+                center: self.eval_vec3(center)?,
+                radius: radius.eval(self)?,
+                material: self.realize_material(material)?,
+            }),
+
+            desc::Hittable::MovingSphere {
+                center,
+                time,
+                radius,
+                material,
+            } => hittables.add(hittable::MovingSphere {
+                center: (self.eval_vec3(center.0)?)..(self.eval_vec3(center.1)?),
+                time: (time.0.eval(self)?)..(time.1.eval(self)?),
+                radius: radius.eval(self)?,
+                material: self.realize_material(material)?,
+            }),
+
+            desc::Hittable::AARect {
+                center,
+                width,
+                height,
+                axis,
+                material,
+            } => hittables.add(AxisAlignedRect {
+                center: self.eval_vec3(center)?,
+                width: width.eval(self)?,
+                height: height.eval(self)?,
+                axis: axis.into(),
+                material: self.realize_material(material)?,
+            }),
+
+            desc::Hittable::Cuboid {
+                center,
+                size,
+                material,
+            } => hittables.add(Cuboid::new(
+                center.map_or_else(|| Ok(Vec3::default()), |c| self.eval_vec3(c))?,
+                self.eval_vec3(size)?,
+                &self.realize_material(material)?,
+            )),
+
+            desc::Hittable::Pattern { var, range, object } => {
+                self.realize_pattern(&var, &range[..], &object, hittables)?;
+            }
+
+            desc::Hittable::Translate { offset, hittable } => {
+                let offset = self.eval_vec3(offset)?;
+                let mut inner = HittableAccum::default();
+                self.realize_hittable(*hittable, &mut inner)?;
+                hittables.add_many(inner.0.into_iter().map(|h| {
+                    Box::new(Translate {
+                        offset,
+                        hittable: h,
+                    }) as Box<dyn Hittable>
+                }));
+            }
+
+            desc::Hittable::RotateY { angle, hittable } => {
+                let theta = angle.eval(self)?.to_radians();
+                let mut inner = HittableAccum::default();
+                self.realize_hittable(*hittable, &mut inner)?;
+                hittables.add_many(
+                    inner
+                        .0
+                        .into_iter()
+                        .map(|h| Box::new(RotateY::new(h, theta)) as Box<dyn Hittable>),
+                );
+            }
+        };
+        Ok(())
+    }
+
+    fn realize_pattern(
+        &mut self,
         var: &str,
         range: &[i32],
-        object: &desc::HittableDesc,
+        object: &desc::Hittable,
+        hittables: &mut HittableAccum,
     ) -> Result<()> {
         let range = match range {
             &[end] => (0..end).step_by(1),
@@ -134,18 +193,18 @@ impl SceneLoader {
 
         for val in range {
             self.pattern_vars.insert(var.to_string(), val);
-            match *object {
-                desc::HittableDesc::Sphere {
+            match object {
+                desc::Hittable::Sphere {
                     ref center,
                     ref radius,
                     ref material,
-                } => hittables.push(Box::new(hittable::Sphere {
+                } => hittables.add(hittable::Sphere {
                     center: self.eval_vec3(center.clone())?,
                     radius: radius.eval(self)?,
                     material: self.realize_material((*material).clone())?,
-                })),
+                }),
 
-                desc::HittableDesc::MovingSphere {
+                desc::Hittable::MovingSphere {
                     ref center,
                     ref time,
                     ref radius,
@@ -153,34 +212,70 @@ impl SceneLoader {
                 } => {
                     let c1 = self.eval_vec3(center.0.clone())?;
                     let c2 = self.eval_vec3(center.1.clone())?;
-                    hittables.push(Box::new(hittable::MovingSphere {
+                    hittables.add(hittable::MovingSphere {
                         center: c1..c2,
                         time: (time.0.eval(self)?)..(time.1.eval(self)?),
                         radius: radius.eval(self)?,
                         material: self.realize_material((*material).clone())?,
-                    }));
+                    });
                 }
 
-                desc::HittableDesc::AARect {
+                desc::Hittable::AARect {
                     ref center,
                     ref width,
                     ref height,
                     ref axis,
                     ref material,
-                } => hittables.push(Box::new(AxisAlignedRect {
+                } => hittables.add(AxisAlignedRect {
                     center: self.eval_vec3(center.clone())?,
                     width: width.eval(self)?,
                     height: height.eval(self)?,
                     axis: (*axis).into(),
                     material: self.realize_material((*material).clone())?,
-                })),
+                }),
 
-                desc::HittableDesc::Pattern {
+                desc::Hittable::Cuboid {
+                    ref center,
+                    ref size,
+                    ref material,
+                } => hittables.add(Cuboid::new(
+                    center
+                        .clone()
+                        .map_or_else(|| Ok(Vec3::default()), |c| self.eval_vec3(c))?,
+                    self.eval_vec3(size.clone())?,
+                    &self.realize_material((*material).clone())?,
+                )),
+
+                desc::Hittable::Pattern {
                     ref var,
                     ref range,
                     ref object,
                 } => {
-                    self.realize_pattern(hittables, var, range, object)?;
+                    self.realize_pattern(var, range, object, hittables)?;
+                }
+
+                desc::Hittable::Translate { offset, hittable } => {
+                    let offset = self.eval_vec3(offset.clone())?;
+                    let mut inner = HittableAccum::default();
+                    self.realize_hittable((**hittable).clone(), &mut inner)?;
+                    hittables.add_many(inner.0.into_iter().map(|h| {
+                        Box::new(Translate {
+                            offset,
+                            hittable: h,
+                        }) as Box<dyn Hittable>
+                    }));
+                }
+
+                desc::Hittable::RotateY { angle, hittable } => {
+                    let theta = angle.eval(self)?.to_radians();
+                    let mut inner = HittableAccum::default();
+                    self.realize_hittable((**hittable).clone(), &mut inner)?;
+                    hittables.add_many(
+                        inner
+                            .0
+                            .into_iter()
+                            .map(|h| Box::new(RotateY::new(h, theta)) as Box<dyn Hittable>),
+                    );
                 }
             }
         }
@@ -188,40 +283,40 @@ impl SceneLoader {
         Ok(())
     }
 
-    pub(crate) fn realize_material<D: Into<desc::MaterialDesc>>(
+    pub(crate) fn realize_material<D: Into<desc::Material>>(
         &self,
         desc: D,
     ) -> Result<Arc<dyn material::Material>> {
-        let desc: desc::MaterialDesc = desc.into();
+        let desc: desc::Material = desc.into();
         Ok(match desc {
-            desc::MaterialDesc::Shared(ref name) => self
+            desc::Material::Shared(ref name) => self
                 .materials
                 .get(name)
                 .ok_or_else(|| anyhow!("Material {} not defined", name))?
                 .clone(),
-            desc::MaterialDesc::Lambertian { albedo } => Arc::new(material::Lambertian {
+            desc::Material::Lambertian { albedo } => Arc::new(material::Lambertian {
                 albedo: self.realize_texture(albedo)?,
             }),
-            desc::MaterialDesc::Dielectric {
+            desc::Material::Dielectric {
                 index_of_refraction,
             } => Arc::new(material::Dielectric {
                 index_of_refraction: index_of_refraction
                     .eval(self)
                     .context("evaluating index_of_refraction")?,
             }),
-            desc::MaterialDesc::Metal { albedo, fuzziness } => Arc::new(material::Metal {
+            desc::Material::Metal { albedo, fuzziness } => Arc::new(material::Metal {
                 albedo: self.eval_vec3(albedo)?,
                 fuzziness: fuzziness.eval(self).context("evaluating fuzziness")?,
             }),
-            desc::MaterialDesc::DiffuseLight { color } => Arc::new(material::DiffuseLight {
+            desc::Material::DiffuseLight { color } => Arc::new(material::DiffuseLight {
                 texture: self.realize_texture(color)?,
             }),
-            desc::MaterialDesc::RandomChoice(options) => {
+            desc::Material::RandomChoice(options) => {
                 let mut rng = thread_rng();
                 let idx = rng.gen_range(0..options.len());
                 self.realize_material((options[idx]).clone())?
             }
-            desc::MaterialDesc::RandomChoiceWeighted(options) => {
+            desc::Material::RandomChoiceWeighted(options) => {
                 let dist = rand::distributions::WeightedIndex::new(options.iter().map(|c| c.0))
                     .context("generating weighted distribution")?;
                 let mut rng = thread_rng();
