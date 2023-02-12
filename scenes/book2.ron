@@ -1,0 +1,148 @@
+Scene(
+    image: (
+        width: 800,
+        height: 800,
+        // width: 250,
+        // height: 250,
+        samples_per_pixel: 10_000,
+        // samples_per_pixel: 50,
+        max_depth: 32,
+    ),
+
+    camera: (
+        look_from: (478, 278, -600),
+        look_at: (278, 278, 0),
+        vertical_fov: 40,
+        aperture: 0,
+        shutter_time: (0, 1),
+    ),
+
+    // background: (0, 0, 0),
+    background: (0.2, 0.2, 0.2),
+    // background: (1, 1, 1),
+
+    materials: {
+        "ground": Lambertian(albedo: Solid(0.48, 0.83, 0.53)),
+        "white": Lambertian(albedo: Solid(1, 1, 1,)),
+    },
+
+    objects: [
+        // ground
+        Pattern (
+            var: "i",
+            range: [0, 19],
+            object: Pattern (
+                var: "j",
+                range: [0, 19],
+                object: Cuboid (
+                    center: (
+                        ("Add", -1050, ("Mult", "i", 100)),
+                        0,
+                        ("Add", -1050, ("Mult", "j", 100)),
+                    ),
+                    size: (99.9, ("Rand", 1, 101), 100),
+                    material: Shared("ground"),
+                )
+            )
+        ),
+
+        // overhead light
+        AARect (
+            center: (273, 554, 279.5),
+            width: 300,
+            height: 265,
+            axis: Y,
+            material: DiffuseLight(color: Solid(7, 7, 7))
+        ),
+
+        // motion blur ball
+        MovingSphere(
+            center: ((400, 400, 200), (430, 400, 200)),
+            time: (0, 1),
+            radius: 50,
+            material: Lambertian(albedo: Solid(0.7, 0.3, 0.1))
+        ),
+
+        // glass ball
+        Sphere (
+            center: (260, 150, 45),
+            radius: 50,
+            material: Dielectric(index_of_refraction: 1.5),
+        ),
+
+        // metal ball
+        Sphere (
+            center: (0, 150, 145),
+            radius: 45,
+            material: Metal(albedo: (0.8, 0.8, 0.9), fuzziness: 1.0),
+        ),
+
+        // blue shiny ball
+        Sphere (
+            center: (360, 150, 145),
+            radius: 70,
+            material: Dielectric(index_of_refraction: 1.5),
+        ),
+        ConstantMedium (
+            density: 0.2,
+            texture: Solid(0.2, 0.4, 0.9),
+            boundary: Sphere (
+                center: (360, 150, 145),
+                radius: 70,
+                material: Shared("white")
+            )
+        ),
+
+        // general fog
+        ConstantMedium (
+            density: 0.0001,
+            texture: Solid(1, 1, 1),
+            boundary: Sphere (
+                center: (0, 0, 0),
+                radius: 5000,
+                material: Shared("white"),
+            )
+        ),
+
+        // globe
+        Sphere(
+            center: (400, 200, 400),
+            radius: 100,
+            material: Lambertian(albedo: Image("./earthmap.jpg")),
+        ),
+
+        // Sparkly ball
+        Sphere (
+            center: (220, 280, 300),
+            radius: 80,
+            material: Lambertian(albedo: Perlin),
+        ),
+
+        // Bubble box
+        Translate (
+            offset: (-100, 270, 395),
+            hittable: Pattern (
+                var: "_",
+                range: [0, 10_000],
+                object: Sphere(
+                    center: (("Rand", 0, 165), ("Rand", 0, 165), ("Rand", 0, 165)),
+                    radius: 10,
+                    material: Shared("white"),
+                ),
+            ),
+        ),
+        // Pattern (
+        //     var: "_",
+        //     range: [0, 10_000],
+        //     object: Sphere(
+        //         center: (
+        //             ("Add", -100, ("Rand", 0, 165)),
+        //             ("Add", 270, ("Rand", 0, 165)),
+        //             ("Add", 395, ("Rand", 0, 165)),
+        //         ),
+        //         radius: 10,
+        //         material: Shared("white"),
+        //     ),
+        // ),
+    ],
+)

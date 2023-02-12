@@ -87,9 +87,19 @@ impl Hittable for BvhNode {
 
         match &self.contents {
             BvhContents::Leaf(objects) => objects.hit(ray, t_range),
-            BvhContents::Interior { left, right } => left
-                .hit(ray, t_range.clone())
-                .or_else(|| right.hit(ray, t_range)),
+            BvhContents::Interior { left, right } => {
+                match (left.hit(ray, t_range.clone()), right.hit(ray, t_range)) {
+                    (Some(hit_left), Some(hit_right)) => {
+                        if hit_left.t < hit_right.t {
+                            Some(hit_left)
+                        } else {
+                            Some(hit_right)
+                        }
+                    }
+                    (None, hit @ Some(_)) | (hit @ Some(_), None) => hit,
+                    (None, None) => None,
+                }
+            }
         }
     }
 

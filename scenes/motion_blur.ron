@@ -19,14 +19,14 @@ Scene(
     background: (0.7, 0.8, 1.0),
 
     materials: {
-        "blue": Lambertian(albedo: (0.1, 0.2, 0.8)),
+        "blue": Lambertian(albedo: Solid(0.1, 0.2, 0.8)),
     },
 
     objects: [
         Sphere(
             center: (0, -1000, -1),
             radius: 1000,
-            material: Lambertian(albedo: (0.8, 0.8, 0.0)),
+            material: Lambertian(albedo: Solid(0.8, 0.8, 0.0)),
         ),
         Pattern(
             var: "x",
@@ -34,8 +34,8 @@ Scene(
             object: 
             MovingSphere(
                 center: (
-                    (("add", "x", -5), 0.4, 0),
-                    (("add", "x", -5), ("add", 0.4, ("mult", "x", -0.1)), 0),
+                    (("Add", "x", -5), 0.4, 0),
+                    (("Add", "x", -5), ("Add", 0.4, ("Mult", "x", -0.1)), 0),
                 ),
                 time: (0, 1),
                 radius: 0.4,

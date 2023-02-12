@@ -94,7 +94,6 @@ pub(crate) enum Value {
 }
 
 #[derive(Serialize, Deserialize, Copy, Clone, Debug)]
-#[serde(rename = "lowercase")]
 pub(crate) enum BinOp {
     Add,
     Mult,
