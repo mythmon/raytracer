@@ -17,8 +17,8 @@ Scene(
         shutter_time: (0, 1),
     ),
 
-    // background: (0, 0, 0),
-    background: (0.2, 0.2, 0.2),
+    background: (0, 0, 0),
+    // background: (0.2, 0.2, 0.2),
     // background: (1, 1, 1),
 
     materials: {
