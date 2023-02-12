@@ -6,7 +6,7 @@ use crate::{
 };
 use std::ops::Range;
 
-const MAX_PER_LEAF: usize = 10;
+const MAX_PER_LEAF: usize = 256;
 
 /// Bounding Volume Hierarchies
 #[derive(Clone)]
