@@ -1,11 +1,11 @@
 Scene(
     image: (
-        width: 800,
-        height: 800,
-        // width: 250,
-        // height: 250,
-        samples_per_pixel: 10_000,
-        // samples_per_pixel: 50,
+        // width: 800,
+        // height: 800,
+        width: 200,
+        height: 200,
+        // samples_per_pixel: 10_000,
+        samples_per_pixel: 50,
         max_depth: 32,
     ),
 
